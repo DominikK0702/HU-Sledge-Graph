@@ -1,23 +1,62 @@
 import sys
+import csv
+import numpy as np
 import matplotlib
-
-matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.backend_bases import MouseButton
 from matplotlib.figure import Figure
+from matplotlib.widgets import Cursor
 from configparser import ConfigParser
 from PyQt5 import QtCore
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QGridLayout, QGroupBox, QWidget, QVBoxLayout, QFileDialog, QHBoxLayout, QFrame, QSplitter, QStyleFactory
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QGridLayout, QGroupBox, QWidget, QVBoxLayout, \
+    QFileDialog, QHBoxLayout, QFrame, QSplitter, QStyleFactory
 from MainWindow import Ui_MainWindow
 from PyLcSnap7 import S7Conn, Smarttags
+
+matplotlib.use('Qt5Agg')
+
+class SnaptoCursor:
+    """
+    Like Cursor but the crosshair snaps to the nearest x, y point.
+    For simplicity, this assumes that *x* is sorted.
+    """
+
+    def __init__(self, ax, x, y):
+        self.ax = ax
+        self.lx = ax.axhline(color='k')  # the horiz line
+        self.ly = ax.axvline(color='k')  # the vert line
+        self.x = x
+        self.y = y
+        # text location in axes coords
+        self.txt = ax.text(0.7, 0.9, '', transform=ax.transAxes)
+
+    def mouse_move(self, event):
+        if not event.inaxes:
+            return
+
+        x, y = event.xdata, event.ydata
+        indx = min(np.searchsorted(self.x, x), len(self.x) - 1)
+        x = self.x[indx]
+        y = self.y[indx]
+        # update the line positions
+        self.lx.set_ydata(y)
+        self.ly.set_xdata(x)
+
+        self.txt.set_text('x=%1.2f, y=%1.2f' % (x, y))
+        print('x=%1.2f, y=%1.2f' % (x, y))
+        self.ax.figure.canvas.draw()
 
 
 class MplCanvas(FigureCanvasQTAgg):
 
-    def __init__(self, parent=None, width=5, height=4, dpi=100):
-        fig = Figure(figsize=(width, height), dpi=dpi)
+    def __init__(self, config, ):
+        self.cfg = config
+        fig = Figure(figsize=(5, 4), dpi=self.cfg['GRAPH'].getint('dpi'))
         self.axes = fig.add_subplot(111)
+        self.edit_mode = False
+        self.cursor_mode = False
+        self.current_data = None
         super(MplCanvas, self).__init__(fig)
         fig.subplots_adjust(
             top=0.93,
@@ -27,6 +66,8 @@ class MplCanvas(FigureCanvasQTAgg):
             hspace=0.2,
             wspace=0.2
         )
+        self.cursor = SnaptoCursor(self.axes,[i[0] for i in self.curre])
+
 
         self.dragging = False
         self.drag_start_pos = None
@@ -36,8 +77,11 @@ class MplCanvas(FigureCanvasQTAgg):
         self.mpl_connect('button_release_event', self.button_release)
 
     def cursor_move(self, event):
-        if self.dragging:
-            print('From:', self.drag_start_pos, 'To:', (event.xdata, event.ydata))
+        if self.cursor_mode:
+            print('Cursor:',event)
+
+        if self.dragging and self.edit_mode:
+            print('Drag From:', self.drag_start_pos, 'To:', (event.xdata, event.ydata))
 
     def button_press(self, event):
         if event.button.value == MouseButton.LEFT:
@@ -49,7 +93,20 @@ class MplCanvas(FigureCanvasQTAgg):
             self.dragging = False
 
     def plot_current(self, datax, datay):
+        self.axes.clear()
         self.axes.plot(datax, datay)
+        self.cursor.ax = self.axes
+        self.draw()
+
+    def plot_ist(self, datax, datay):
+        self.axes.clear()
+        self.axes.plot(datax, datay)
+        self.draw()
+
+    def plot_soll(self, datax, datay):
+        self.axes.clear()
+        self.axes.plot(datax, datay)
+        self.draw()
 
 
 class PLC(QtCore.QThread):
@@ -62,6 +119,17 @@ class PLC(QtCore.QThread):
         self.array_ist = Smarttags.RealArray(self.plc, self.cfg['PLC'].getint('db_ist'), 0, 3000)
         self.array_soll = Smarttags.RealArray(self.plc, self.cfg['PLC'].getint('db_soll'), 0, 3000)
 
+    def submit_data(self, data):
+        done = False
+        while not done:
+            try:
+                self.array_soll.write(data)
+                done = True
+            except Exception as e:
+                print(e)
+
+
+
     def run(self):
         self.parent.statusbar.showMessage(self.cfg['STRINGS']['status_plc_connecting'])
         self.sleep(1)
@@ -71,7 +139,10 @@ class PLC(QtCore.QThread):
             self.parent.statusbar.showMessage(self.cfg['STRINGS']['status_plc_disconnected'])
 
         while True:
-            self.keep_alive.write(not self.keep_alive.read())
+            try:
+                self.keep_alive.write(not self.keep_alive.read())
+            except Exception as e:
+                pass
             self.msleep(200)
 
 
@@ -81,23 +152,15 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.cfg = config
         self.plc = PLC(self)
         self.plc.start()
+
         self.setupUi(self)
         self.setupWindow()
         self.connect_componets()
 
-
-
-
-        QApplication.setStyle(QStyleFactory.create('Cleanlooks'))
-
-
-
-        self.graph = MplCanvas(self, width=5, height=4, dpi=100)
-        self.graph.plot_current([0,1,2,3,4], [10,1,20,3,40])
+        self.graph = MplCanvas(self.cfg)
 
         # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
         toolbar = NavigationToolbar2QT(self.graph, self)
-
 
         self.mplLayout.addWidget(self.graph)
         self.mplLayout.addWidget(toolbar)
@@ -112,25 +175,38 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def connect_componets(self):
         self.btn_load.clicked.connect(self.handle_btn_load)
         self.btn_save.clicked.connect(self.handle_btn_save)
-        #self.btn_compare.clicked.connect(self.handle_btn_compare)
+        # self.btn_compare.clicked.connect(self.handle_btn_compare)
         self.btn_tool_cursor.clicked.connect(self.handle_btn_tool_cursor)
         self.btn_tool_edit.clicked.connect(self.handle_btn_tool_edit)
+        self.btn_submit_plc.clicked.connect(self.handle_btn_submit_plc)
 
     def handle_btn_load(self):
         options = QFileDialog.Options()
         if not self.cfg['GUI'].getboolean('use_native_filedialog'):
             options |= QFileDialog.DontUseNativeDialog
-        fileName, fileType = QFileDialog.getOpenFileName(self,self.cfg['STRINGS']['csv_load_title'],"","CSV (*.csv)", options=options)
+        fileName, fileType = QFileDialog.getOpenFileName(self, self.cfg['STRINGS']['csv_load_title'], "", "CSV (*.csv)",
+                                                         options=options)
         if fileName:
-            print(fileName+'.csv')
+            with open(fileName, 'r', encoding='utf-8') as file:
+                reader = csv.reader(file, delimiter=';')
+                self.graph.current_data = []
+                for row in reader:
+                    self.graph.current_data.append([int(row[0]), float(row[1])])
+            self.statusbar.showMessage(self.cfg['STRINGS']['status_csv_loaded'])
+
+            self.graph.plot_current([i for i in range(len(self.graph.current_data))], [i[1] for i in self.graph.current_data])
 
     def handle_btn_save(self):
         options = QFileDialog.Options()
         if not self.cfg['GUI'].getboolean('use_native_filedialog'):
             options |= QFileDialog.DontUseNativeDialog
-        fileName, fileType = QFileDialog.getSaveFileName(self,self.cfg['STRINGS']['csv_save_title'],"","CSV (*.csv)", options=options)
+        fileName, fileType = QFileDialog.getSaveFileName(self, self.cfg['STRINGS']['csv_save_title'], "", "CSV (*.csv)",
+                                                         options=options)
         if fileName:
-            print(fileName+'.csv')
+            with open(fileName, 'w', encoding='utf-8', newline='') as file:
+                writer = csv.writer(file, delimiter=';')
+                writer.writerows(self.graph.current_data)
+            self.statusbar.showMessage(self.cfg['STRINGS']['status_csv_saved'])
 
     def handle_btn_compare(self):
         print('compare')
@@ -138,17 +214,25 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def handle_btn_tool_cursor(self):
         if self.btn_tool_cursor.isChecked():
             self.btn_tool_edit.setChecked(False)
-            print('Cursor On')
+            self.graph.cursor_mode = True
+            self.graph.edit_mode = False
         else:
-            print('Cursor Off')
+            self.graph.cursor_mode = False
 
     def handle_btn_tool_edit(self):
         if self.btn_tool_edit.isChecked():
             self.btn_tool_cursor.setChecked(False)
-            print('Edit On')
+            self.graph.edit_mode = True
+            self.graph.cursor_mode = False
         else:
-            print('Edit Off')
+            self.graph.edit_mode = False
 
+    def handle_btn_submit_plc(self):
+        if self.current_data:
+            self.plc.submit_data([i[1] for i in self.current_data])
+            self.statusbar.showMessage(self.cfg['STRINGS']['status_plc_data_submit'])
+        else:
+            self.statusbar.showMessage(self.cfg['STRINGS']['status_plc_data_submit_error'])
 
 if __name__ == '__main__':
     config = ConfigParser()
