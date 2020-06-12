@@ -22,51 +22,66 @@ class SnaptoCursor:
     For simplicity, this assumes that *x* is sorted.
     """
 
-    def __init__(self, ax, x, y):
+    def __init__(self, ax, x, y, cfg):
+        self.cfg = cfg
         self.ax = ax
-        self.lx = ax.axhline(color='k')  # the horiz line
-        self.ly = ax.axvline(color='k')  # the vert line
+        self.lx = ax.axhline(color=self.cfg['GRAPH']['cursor_color_h'])  # the horiz line
+        self.ly = ax.axvline(color=self.cfg['GRAPH']['cursor_color_v'])  # the vert line
         self.x = x
         self.y = y
         # text location in axes coords
         self.txt = ax.text(0.7, 0.9, '', transform=ax.transAxes)
 
+    def clear(self):
+        self.txt.set_alpha(0)
+        self.ly.set_alpha(0)
+        self.lx.set_alpha(0)
+        self.ax.figure.canvas.draw()
+
+
     def mouse_move(self, event):
         if not event.inaxes:
             return
+        try:
+            x, y = event.xdata, event.ydata
+            indx = min(np.searchsorted(self.x, x), len(self.x) - 1)
+            x = self.x[indx]
+            y = self.y[indx]
+            # update the line positions
+            self.lx.set_ydata(y)
+            self.lx.set_alpha(1)
+            self.ly.set_xdata(x)
+            self.ly.set_alpha(1)
 
-        x, y = event.xdata, event.ydata
-        indx = min(np.searchsorted(self.x, x), len(self.x) - 1)
-        x = self.x[indx]
-        y = self.y[indx]
-        # update the line positions
-        self.lx.set_ydata(y)
-        self.ly.set_xdata(x)
+            self.txt.set_alpha(1)
 
-        self.txt.set_text('x=%1.2f, y=%1.2f' % (x, y))
-        print('x=%1.2f, y=%1.2f' % (x, y))
-        self.ax.figure.canvas.draw()
+            self.txt.set_text(f'{self.cfg["GRAPH"]["name_ax_x"]}=%1.2f, {self.cfg["GRAPH"]["name_ax_y"]}=%1.2f' % (x, y))
+            self.ax.figure.canvas.draw()
+        except Exception as e:
+            print(e)
 
 
 class MplCanvas(FigureCanvasQTAgg):
 
     def __init__(self, config, ):
         self.cfg = config
-        fig = Figure(figsize=(5, 4), dpi=self.cfg['GRAPH'].getint('dpi'))
-        self.axes = fig.add_subplot(111)
+        self.fig = Figure(figsize=(5, 4), dpi=self.cfg['GRAPH'].getint('dpi'))
+        self.ax_current = self.fig.subplots()
         self.edit_mode = False
         self.cursor_mode = False
-        self.current_data = None
-        super(MplCanvas, self).__init__(fig)
-        fig.subplots_adjust(
-            top=0.93,
-            bottom=0.065,
-            left=0.05,
-            right=0.989,
-            hspace=0.2,
-            wspace=0.2
+        self.current_data_x = []
+        self.current_data_y = []
+        super(MplCanvas, self).__init__(self.fig)
+        self.fig.subplots_adjust(
+            top=self.cfg['GRAPH'].getfloat('subplot_adjust_top'),
+            bottom=self.cfg['GRAPH'].getfloat('subplot_adjust_bottom'),
+            left=self.cfg['GRAPH'].getfloat('subplot_adjust_left'),
+            right=self.cfg['GRAPH'].getfloat('subplot_adjust_right'),
+            hspace=self.cfg['GRAPH'].getfloat('subplot_adjust_hspace'),
+            wspace=self.cfg['GRAPH'].getfloat('subplot_adjust_wspace')
         )
-        self.cursor = SnaptoCursor(self.axes,[i[0] for i in self.curre])
+
+        self.cursor = SnaptoCursor(self.ax_current, self.current_data_x, self.current_data_y, self.cfg)
 
 
         self.dragging = False
@@ -78,7 +93,10 @@ class MplCanvas(FigureCanvasQTAgg):
 
     def cursor_move(self, event):
         if self.cursor_mode:
-            print('Cursor:',event)
+            self.cursor.x, self.cursor.y = self.current_data_x, self.current_data_y
+            self.cursor.mouse_move(event)
+        else:
+            self.cursor.clear()
 
         if self.dragging and self.edit_mode:
             print('Drag From:', self.drag_start_pos, 'To:', (event.xdata, event.ydata))
@@ -92,21 +110,22 @@ class MplCanvas(FigureCanvasQTAgg):
         if event.button.value == MouseButton.LEFT:
             self.dragging = False
 
+    def clear_axes(self):
+        self.ax_current.lines.clear()
+        self.ax_soll.lines.clear()
+        self.ax_ist.lines.clear()
+
     def plot_current(self, datax, datay):
-        self.axes.clear()
-        self.axes.plot(datax, datay)
-        self.cursor.ax = self.axes
-        self.draw()
+        self.ax_current.plot(datax, datay)
+        self.ax_current.figure.canvas.draw()
 
     def plot_ist(self, datax, datay):
-        self.axes.clear()
-        self.axes.plot(datax, datay)
-        self.draw()
+        self.ax_current.plot(datax, datay)
+        self.ax_current.figure.canvas.draw()
 
     def plot_soll(self, datax, datay):
-        self.axes.clear()
-        self.axes.plot(datax, datay)
-        self.draw()
+        self.ax_current.plot(datax, datay)
+        self.ax_current.figure.canvas.draw()
 
 
 class PLC(QtCore.QThread):
@@ -116,6 +135,7 @@ class PLC(QtCore.QThread):
         self.cfg = parent.cfg
         self.plc = S7Conn(self.cfg['PLC']['ip'])
         self.keep_alive = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_in'), 0, 0)
+        self.regler_date_ready = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_out'), 0, 0)
         self.array_ist = Smarttags.RealArray(self.plc, self.cfg['PLC'].getint('db_ist'), 0, 3000)
         self.array_soll = Smarttags.RealArray(self.plc, self.cfg['PLC'].getint('db_soll'), 0, 3000)
 
@@ -191,10 +211,12 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                 reader = csv.reader(file, delimiter=';')
                 self.graph.current_data = []
                 for row in reader:
-                    self.graph.current_data.append([int(row[0]), float(row[1])])
+                    self.graph.current_data_x.append(int(row[0]))
+                    self.graph.current_data_y.append(float(row[1]))
+
             self.statusbar.showMessage(self.cfg['STRINGS']['status_csv_loaded'])
 
-            self.graph.plot_current([i for i in range(len(self.graph.current_data))], [i[1] for i in self.graph.current_data])
+            self.graph.plot_current(self.graph.current_data_x, self.graph.current_data_y)
 
     def handle_btn_save(self):
         options = QFileDialog.Options()
@@ -218,6 +240,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.graph.edit_mode = False
         else:
             self.graph.cursor_mode = False
+            self.graph.cursor.clear()
 
     def handle_btn_tool_edit(self):
         if self.btn_tool_edit.isChecked():

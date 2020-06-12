@@ -133,7 +133,7 @@ QComboBox QAbstractItemView {
         <number>0</number>
        </property>
        <item>
-        <layout class="QHBoxLayout" name="headLayout" stretch="0,1,1,1,1,1">
+        <layout class="QHBoxLayout" name="headLayout" stretch="0,1,1,1,1,0,1">
          <property name="spacing">
           <number>10</number>
          </property>
@@ -376,6 +376,13 @@ QComboBox QAbstractItemView {
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="pushButton_2">
+           <property name="text">
+            <string>PushButton</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <spacer name="horizontalSpacer">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
@@ -420,7 +427,7 @@ QComboBox QAbstractItemView {
           <number>0</number>
          </property>
          <item>
-          <layout class="QVBoxLayout" name="mplLayout" stretch="">
+          <layout class="QVBoxLayout" name="mplLayout">
            <property name="spacing">
             <number>0</number>
            </property>
