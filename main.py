@@ -1,6 +1,7 @@
 import sys
 import csv
 import numpy as np
+from scipy import interpolate
 import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 from matplotlib.backend_bases import MouseButton
@@ -14,7 +15,10 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QGridLayout,
 from MainWindow import Ui_MainWindow
 from PyLcSnap7 import S7Conn, Smarttags
 
-matplotlib.use('Qt5Agg')
+from pyqtgraph import PlotWidget, plot
+import pyqtgraph as pg
+
+#matplotlib.use('Qt5Agg')
 
 class SnaptoCursor:
     """
@@ -67,6 +71,7 @@ class MplCanvas(FigureCanvasQTAgg):
         self.cfg = config
         self.fig = Figure(figsize=(5, 4), dpi=self.cfg['GRAPH'].getint('dpi'))
         self.ax_current = self.fig.subplots()
+        self.line_current = None
         self.edit_mode = False
         self.cursor_mode = False
         self.current_data_x = []
@@ -99,6 +104,25 @@ class MplCanvas(FigureCanvasQTAgg):
             self.cursor.clear()
 
         if self.dragging and self.edit_mode:
+            index = int(round(self.drag_start_pos[0]))
+            self.current_data_y[index] = event.ydata
+
+            tmp = []
+            rate = 100
+            for i in range(rate):
+                tmp .append(self.current_data_y[index+i-rate])
+            for i in range(rate):
+                tmp .append(self.current_data_y[index+i])
+            tck = interpolate.splrep(range(len(tmp)), tmp)
+
+            newy = [interpolate.splev(i/10, tck) for i in range(len(tmp))]
+
+
+            for i in range(rate):
+                self.current_data_y[index+i-rate] = newy[i]
+            for i in range(rate):
+                self.current_data_y[index+i] = newy[rate+i]
+            self.plot_current(self.current_data_x, self.current_data_y)
             print('Drag From:', self.drag_start_pos, 'To:', (event.xdata, event.ydata))
 
     def button_press(self, event):
@@ -116,7 +140,10 @@ class MplCanvas(FigureCanvasQTAgg):
         self.ax_ist.lines.clear()
 
     def plot_current(self, datax, datay):
-        self.ax_current.plot(datax, datay)
+        if not self.line_current:
+            self.line_current = self.ax_current.plot(datax, datay)[0]
+        else:
+            self.line_current.set_data(datax,datay)
         self.ax_current.figure.canvas.draw()
 
     def plot_ist(self, datax, datay):
@@ -126,6 +153,9 @@ class MplCanvas(FigureCanvasQTAgg):
     def plot_soll(self, datax, datay):
         self.ax_current.plot(datax, datay)
         self.ax_current.figure.canvas.draw()
+
+
+
 
 
 class PLC(QtCore.QThread):
@@ -148,6 +178,17 @@ class PLC(QtCore.QThread):
             except Exception as e:
                 print(e)
 
+    def read_soll_ist_data(self):
+        done = False
+        while not done:
+            try:
+                soll = self.array_soll.read()
+                ist = self.array_ist.read()
+                done = True
+            except Exception as e:
+                print(e)
+        return soll, ist
+
 
 
     def run(self):
@@ -169,6 +210,10 @@ class PLC(QtCore.QThread):
 class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, plc, config, *args, **kwargs):
         super(GraphMainWindow, self).__init__(*args, **kwargs)
+        self.current_data_x = []
+        self.current_data_y = []
+        self.soll_data = []
+        self.ist_data = []
         self.cfg = config
         self.plc = PLC(self)
         self.plc.start()
@@ -177,13 +222,34 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.setupWindow()
         self.connect_componets()
 
-        self.graph = MplCanvas(self.cfg)
+        pg.setConfigOptions(antialias=True)
 
-        # Create toolbar, passing canvas as first parament, parent (self, the MainWindow) as second.
-        toolbar = NavigationToolbar2QT(self.graph, self)
+        self.graph = pg.PlotWidget(enableMenu=True)
+        self.graph.setMouseEnabled(x=True, y=False)
+        self.graph.enableAutoRange(x=True, y=True)
+
+
+
+        self.pen_current = pg.mkPen(color=(255, 0, 0), width=2)
+        self.pen_soll = pg.mkPen(color=(0, 255, 0), width=2)
+        self.pen_ist = pg.mkPen(color=(0, 0, 255), width=2)
+        self.pen_zero = pg.mkPen(color=(255, 0, 0,150), width=1)
+        self.graph.setBackground((255,255,255,0))
+        self.graph.showGrid(x=True, y=True)
+        styles = {'color': 'r', 'font-size': '20px'}
+        self.graph.setLabel('left', 'Acc [m/s]', **styles)
+        self.graph.setLabel('bottom', 'Datenpunkte', **styles)
+        self.graph.addLegend()
+
+        self.plot = pg.PlotCurveItem(clickable=True)
+        self.plot.setData({'x':np.array([1,2,3]),'y':np.array([1,2,3])})
+        self.graph.addItem(plot)
+
+
+
+
 
         self.mplLayout.addWidget(self.graph)
-        self.mplLayout.addWidget(toolbar)
 
         self.show()
 
@@ -195,10 +261,15 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def connect_componets(self):
         self.btn_load.clicked.connect(self.handle_btn_load)
         self.btn_save.clicked.connect(self.handle_btn_save)
-        # self.btn_compare.clicked.connect(self.handle_btn_compare)
+        self.btn_compare.clicked.connect(self.handle_btn_compare)
         self.btn_tool_cursor.clicked.connect(self.handle_btn_tool_cursor)
         self.btn_tool_edit.clicked.connect(self.handle_btn_tool_edit)
         self.btn_submit_plc.clicked.connect(self.handle_btn_submit_plc)
+        self.btn_clear.clicked.connect(self.handle_btn_clear)
+
+    def handle_btn_clear(self):
+        self.graph.clear()
+        self.graph.setTitle('')
 
     def handle_btn_load(self):
         options = QFileDialog.Options()
@@ -211,12 +282,14 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                 reader = csv.reader(file, delimiter=';')
                 self.graph.current_data = []
                 for row in reader:
-                    self.graph.current_data_x.append(int(row[0]))
-                    self.graph.current_data_y.append(float(row[1]))
+                    self.current_data_x.append(int(row[0]))
+                    self.current_data_y.append(float(row[1]))
 
             self.statusbar.showMessage(self.cfg['STRINGS']['status_csv_loaded'])
+            self.graph.clear()
+            self.graph.plot(self.current_data_x, self.current_data_y, pen=self.pen_current, name='File')
+            self.graph.setTitle('Current')
 
-            self.graph.plot_current(self.graph.current_data_x, self.graph.current_data_y)
 
     def handle_btn_save(self):
         options = QFileDialog.Options()
@@ -231,7 +304,13 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.statusbar.showMessage(self.cfg['STRINGS']['status_csv_saved'])
 
     def handle_btn_compare(self):
-        print('compare')
+        self.graph.clear()
+        self.soll_data, self.ist_data = self.plc.read_soll_ist_data()
+        self.graph.plot(self.soll_data, pen=self.pen_soll, name='Soll')
+        self.graph.plot(self.ist_data, pen=self.pen_ist, name='Ist')
+        self.graph.setTitle('Soll-Ist')
+        self.graph.addItem(pg.InfiniteLine((0, 0), pen=self.pen_zero))
+        self.graph.addItem(pg.InfiniteLine((0, 0),angle=0, pen=self.pen_zero))
 
     def handle_btn_tool_cursor(self):
         if self.btn_tool_cursor.isChecked():
@@ -251,8 +330,8 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.graph.edit_mode = False
 
     def handle_btn_submit_plc(self):
-        if self.current_data:
-            self.plc.submit_data([i[1] for i in self.current_data])
+        if self.current_data_y:
+            self.plc.submit_data(self.current_data_y)
             self.statusbar.showMessage(self.cfg['STRINGS']['status_plc_data_submit'])
         else:
             self.statusbar.showMessage(self.cfg['STRINGS']['status_plc_data_submit_error'])

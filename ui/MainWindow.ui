@@ -133,7 +133,7 @@ QComboBox QAbstractItemView {
         <number>0</number>
        </property>
        <item>
-        <layout class="QHBoxLayout" name="headLayout" stretch="0,1,1,1,1,0,1">
+        <layout class="QHBoxLayout" name="headLayout" stretch="0,1,1,1,1,1">
          <property name="spacing">
           <number>10</number>
          </property>
@@ -241,7 +241,7 @@ QComboBox QAbstractItemView {
                <number>7</number>
               </property>
               <item>
-               <widget class="QPushButton" name="pushButton">
+               <widget class="QPushButton" name="btn_compare">
                 <property name="enabled">
                  <bool>true</bool>
                 </property>
@@ -302,7 +302,7 @@ QComboBox QAbstractItemView {
              <number>7</number>
             </property>
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_Tools" stretch="0,0">
+             <layout class="QVBoxLayout" name="verticalLayout_Tools" stretch="0,0,0">
               <property name="spacing">
                <number>0</number>
               </property>
@@ -335,6 +335,13 @@ QComboBox QAbstractItemView {
                 </property>
                 <property name="checkable">
                  <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btn_clear">
+                <property name="text">
+                 <string>Clear</string>
                 </property>
                </widget>
               </item>
@@ -373,13 +380,6 @@ QComboBox QAbstractItemView {
              </layout>
             </item>
            </layout>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="pushButton_2">
-           <property name="text">
-            <string>PushButton</string>
-           </property>
           </widget>
          </item>
          <item>
@@ -446,7 +446,7 @@ QComboBox QAbstractItemView {
      <x>0</x>
      <y>0</y>
      <width>1517</width>
-     <height>26</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
