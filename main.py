@@ -1,161 +1,16 @@
 import sys
 import csv
-import numpy as np
-from scipy import interpolate
-import matplotlib
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
-from matplotlib.backend_bases import MouseButton
-from matplotlib.figure import Figure
-from matplotlib.widgets import Cursor
+import matplotlib.pyplot as plt
+from PIL import ImageColor
+
 from configparser import ConfigParser
 from PyQt5 import QtCore
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QGridLayout, QGroupBox, QWidget, QVBoxLayout, \
-    QFileDialog, QHBoxLayout, QFrame, QSplitter, QStyleFactory
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget
 from MainWindow import Ui_MainWindow
 from PyLcSnap7 import S7Conn, Smarttags
-
-from pyqtgraph import PlotWidget, plot
+from SinamicsExport import get_last_trace
 import pyqtgraph as pg
-
-#matplotlib.use('Qt5Agg')
-
-class SnaptoCursor:
-    """
-    Like Cursor but the crosshair snaps to the nearest x, y point.
-    For simplicity, this assumes that *x* is sorted.
-    """
-
-    def __init__(self, ax, x, y, cfg):
-        self.cfg = cfg
-        self.ax = ax
-        self.lx = ax.axhline(color=self.cfg['GRAPH']['cursor_color_h'])  # the horiz line
-        self.ly = ax.axvline(color=self.cfg['GRAPH']['cursor_color_v'])  # the vert line
-        self.x = x
-        self.y = y
-        # text location in axes coords
-        self.txt = ax.text(0.7, 0.9, '', transform=ax.transAxes)
-
-    def clear(self):
-        self.txt.set_alpha(0)
-        self.ly.set_alpha(0)
-        self.lx.set_alpha(0)
-        self.ax.figure.canvas.draw()
-
-
-    def mouse_move(self, event):
-        if not event.inaxes:
-            return
-        try:
-            x, y = event.xdata, event.ydata
-            indx = min(np.searchsorted(self.x, x), len(self.x) - 1)
-            x = self.x[indx]
-            y = self.y[indx]
-            # update the line positions
-            self.lx.set_ydata(y)
-            self.lx.set_alpha(1)
-            self.ly.set_xdata(x)
-            self.ly.set_alpha(1)
-
-            self.txt.set_alpha(1)
-
-            self.txt.set_text(f'{self.cfg["GRAPH"]["name_ax_x"]}=%1.2f, {self.cfg["GRAPH"]["name_ax_y"]}=%1.2f' % (x, y))
-            self.ax.figure.canvas.draw()
-        except Exception as e:
-            print(e)
-
-
-class MplCanvas(FigureCanvasQTAgg):
-
-    def __init__(self, config, ):
-        self.cfg = config
-        self.fig = Figure(figsize=(5, 4), dpi=self.cfg['GRAPH'].getint('dpi'))
-        self.ax_current = self.fig.subplots()
-        self.line_current = None
-        self.edit_mode = False
-        self.cursor_mode = False
-        self.current_data_x = []
-        self.current_data_y = []
-        super(MplCanvas, self).__init__(self.fig)
-        self.fig.subplots_adjust(
-            top=self.cfg['GRAPH'].getfloat('subplot_adjust_top'),
-            bottom=self.cfg['GRAPH'].getfloat('subplot_adjust_bottom'),
-            left=self.cfg['GRAPH'].getfloat('subplot_adjust_left'),
-            right=self.cfg['GRAPH'].getfloat('subplot_adjust_right'),
-            hspace=self.cfg['GRAPH'].getfloat('subplot_adjust_hspace'),
-            wspace=self.cfg['GRAPH'].getfloat('subplot_adjust_wspace')
-        )
-
-        self.cursor = SnaptoCursor(self.ax_current, self.current_data_x, self.current_data_y, self.cfg)
-
-
-        self.dragging = False
-        self.drag_start_pos = None
-
-        self.mpl_connect('motion_notify_event', self.cursor_move)
-        self.mpl_connect('button_press_event', self.button_press)
-        self.mpl_connect('button_release_event', self.button_release)
-
-    def cursor_move(self, event):
-        if self.cursor_mode:
-            self.cursor.x, self.cursor.y = self.current_data_x, self.current_data_y
-            self.cursor.mouse_move(event)
-        else:
-            self.cursor.clear()
-
-        if self.dragging and self.edit_mode:
-            index = int(round(self.drag_start_pos[0]))
-            self.current_data_y[index] = event.ydata
-
-            tmp = []
-            rate = 100
-            for i in range(rate):
-                tmp .append(self.current_data_y[index+i-rate])
-            for i in range(rate):
-                tmp .append(self.current_data_y[index+i])
-            tck = interpolate.splrep(range(len(tmp)), tmp)
-
-            newy = [interpolate.splev(i/10, tck) for i in range(len(tmp))]
-
-
-            for i in range(rate):
-                self.current_data_y[index+i-rate] = newy[i]
-            for i in range(rate):
-                self.current_data_y[index+i] = newy[rate+i]
-            self.plot_current(self.current_data_x, self.current_data_y)
-            print('Drag From:', self.drag_start_pos, 'To:', (event.xdata, event.ydata))
-
-    def button_press(self, event):
-        if event.button.value == MouseButton.LEFT:
-            self.drag_start_pos = (event.xdata, event.ydata)
-            self.dragging = True
-
-    def button_release(self, event):
-        if event.button.value == MouseButton.LEFT:
-            self.dragging = False
-
-    def clear_axes(self):
-        self.ax_current.lines.clear()
-        self.ax_soll.lines.clear()
-        self.ax_ist.lines.clear()
-
-    def plot_current(self, datax, datay):
-        if not self.line_current:
-            self.line_current = self.ax_current.plot(datax, datay)[0]
-        else:
-            self.line_current.set_data(datax,datay)
-        self.ax_current.figure.canvas.draw()
-
-    def plot_ist(self, datax, datay):
-        self.ax_current.plot(datax, datay)
-        self.ax_current.figure.canvas.draw()
-
-    def plot_soll(self, datax, datay):
-        self.ax_current.plot(datax, datay)
-        self.ax_current.figure.canvas.draw()
-
-
-
 
 
 class PLC(QtCore.QThread):
@@ -168,12 +23,29 @@ class PLC(QtCore.QThread):
         self.regler_date_ready = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_out'), 0, 0)
         self.array_ist = Smarttags.RealArray(self.plc, self.cfg['PLC'].getint('db_ist'), 0, 3000)
         self.array_soll = Smarttags.RealArray(self.plc, self.cfg['PLC'].getint('db_soll'), 0, 3000)
+        self.var_url_01 = Smarttags.String(self.plc, self.cfg['PLC'].getint('db_out'), 0, 64)
+        self.var_url_02 = Smarttags.String(self.plc, self.cfg['PLC'].getint('db_out'), 66, 64)
+        self.var_url_03 = Smarttags.String(self.plc, self.cfg['PLC'].getint('db_out'), 132, 64)
+        self.anf_soll = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_out'), 198, 0)
+        self.anf_kompl = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_out'), 198, 1)
+        self.bg_color = Smarttags.String(self.plc, self.cfg['PLC'].getint('db_out'), 200, 8)
+        self.soll_color = Smarttags.String(self.plc, self.cfg['PLC'].getint('db_out'), 208, 8)
+        self.ist_color = Smarttags.String(self.plc, self.cfg['PLC'].getint('db_out'), 216, 8)
+        self.soll_linewidth = Smarttags.Int(self.plc, self.cfg['PLC'].getint('db_out'), 224)
+        self.ist_linewidth = Smarttags.Int(self.plc, self.cfg['PLC'].getint('db_out'), 226)
+        self.bez_x = Smarttags.String(self.plc, self.cfg['PLC'].getint('db_out'), 228, 16)
+        self.bez_y = Smarttags.String(self.plc, self.cfg['PLC'].getint('db_out'), 246, 16)
+        self.size_x = Smarttags.Int(self.plc, self.cfg['PLC'].getint('db_out'), 264)
+        self.size_y = Smarttags.Int(self.plc, self.cfg['PLC'].getint('db_out'), 266)
+        self.plot_done_soll = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_in'), 0, 1)
+        self.plot_done_kompl = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_in'), 0, 2)
+        self.dpi = 100
 
-    def submit_data(self, data):
+    def submit_data(self, datay):
         done = False
         while not done:
             try:
-                self.array_soll.write(data)
+                self.array_soll.write(datay)
                 done = True
             except Exception as e:
                 print(e)
@@ -189,7 +61,61 @@ class PLC(QtCore.QThread):
                 print(e)
         return soll, ist
 
+    def plot_soll(self):
+        soll = self.array_soll.read()
+        fig = plt.figure(dpi=self.dpi, figsize=(self.size_x.read() / self.dpi, self.size_y.read() / self.dpi))
+        fig.subplots_adjust(top=self.cfg['PLCGRAPH'].getfloat('adjust_top'),
+                            bottom=self.cfg['PLCGRAPH'].getfloat('adjust_bottom'),
+                            left=self.cfg['PLCGRAPH'].getfloat('ajdust_left'),
+                            right=self.cfg['PLCGRAPH'].getfloat('adjust_right'),
+                            hspace=self.cfg['PLCGRAPH'].getfloat('adjust_hspace'),
+                            wspace=self.cfg['PLCGRAPH'].getfloat('adjust_wspace'))
+        ax = fig.add_subplot()
+        ax.set_facecolor('#' + self.bg_color.read())
+        ax.set_ylabel(self.bez_y.read())
+        ax.set_xlabel(self.bez_x.read())
+        ax.plot([i for i in range(len(soll))], soll, linewidth=self.soll_linewidth.read(),
+                color='#' + self.soll_color.read())
+        fig.savefig(self.var_url_02.read(), dpi=self.dpi)
+        fig.savefig(self.var_url_03.read(), dpi=self.dpi)
 
+    def plot_kompl(self):
+        filename = get_last_trace(self.cfg['PLC']['ip_cu320'], './export/trace.csv')
+        header = None
+        data = []
+        with open(filename, 'r', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile, delimiter=';')
+            for i, row in enumerate(reader):
+                if i == 0:
+                    header = row
+                else:
+                    data.append(row)
+
+        khz = self.cfg['GRAPH'].getint('resolution_khz')
+        soll_data = self.array_soll.read()
+        soll_x = [(count + 1) / (khz * 1000) for count in range(len(soll_data))]
+
+        ist_x = [float(i[self.cfg['GRAPH'].getint('trace_x_index')].replace(',', '.')) for i in data]
+        ist_data = [float(i[self.cfg['GRAPH'].getint('trace_y_index')].replace(',', '.')) for i in data]
+
+        fig = plt.figure(dpi=self.dpi, figsize=(self.size_x.read() / self.dpi, self.size_y.read() / self.dpi))
+        fig.subplots_adjust(top=self.cfg['PLCGRAPH'].getfloat('adjust_top'),
+                            bottom=self.cfg['PLCGRAPH'].getfloat('adjust_bottom'),
+                            left=self.cfg['PLCGRAPH'].getfloat('ajdust_left'),
+                            right=self.cfg['PLCGRAPH'].getfloat('adjust_right'),
+                            hspace=self.cfg['PLCGRAPH'].getfloat('adjust_hspace'),
+                            wspace=self.cfg['PLCGRAPH'].getfloat('adjust_wspace'))
+        ax = fig.add_subplot()
+        ax.set_facecolor('#' + self.bg_color.read())
+        ax.set_ylabel(self.bez_y.read())
+        ax.set_xlabel(self.bez_x.read())
+        ax.plot(x, soll_data, linewidth=self.soll_linewidth.read(),
+                color='#' + self.soll_color.read())
+
+        ax.plot(x, ist_data, linewidth=self.ist_linewidth.read(),
+                color='#' + self.ist_color.read())
+        fig.savefig(self.var_url_02.read(), dpi=self.dpi)
+        fig.savefig(self.var_url_03.read(), dpi=self.dpi)
 
     def run(self):
         self.parent.statusbar.showMessage(self.cfg['STRINGS']['status_plc_connecting'])
@@ -201,10 +127,46 @@ class PLC(QtCore.QThread):
 
         while True:
             try:
-                self.keep_alive.write(not self.keep_alive.read())
+                if not self.plc.connect():
+                    self.parent.statusbar.showMessage(self.cfg['STRINGS']['status_plc_disconnected'])
+                else:
+                    self.keep_alive.write(not self.keep_alive.read())
+                    if self.anf_soll.read():
+                        self.plot_soll()
+                        self.anf_soll.write(False)
+                        self.plot_done_soll.write(True)
+                    elif self.anf_kompl.read():
+                        self.plot_kompl()
+                        self.anf_kompl.write(False)
+                        self.plot_done_kompl.write(True)
+
+
             except Exception as e:
-                pass
+                print(e)
             self.msleep(200)
+
+
+class Graph(pg.PlotWidget):
+    def __init__(self, cfg):
+        self.cfg = cfg
+        super(Graph, self).__init__(enableMenu=self.cfg['GRAPH'].getboolean('enable_menu'))
+        self.setMouseEnabled(x=self.cfg['GRAPH'].getboolean('mouseenable_x'),
+                             y=self.cfg['GRAPH'].getboolean('mouseenable_x'))
+        self.enableAutoRange(x=self.cfg['GRAPH'].getboolean('autorange_x'),
+                             y=self.cfg['GRAPH'].getboolean('autorange_x'))
+        self.showGrid(x=self.cfg['GRAPH'].getboolean('grid_x'), y=self.cfg['GRAPH'].getboolean('grid_y'))
+        self.setXLabel(self.cfg['GRAPH']['name_ax_x'])
+        self.setYLabel(self.cfg['GRAPH']['name_ax_y'])
+        self.addLegend()
+        self.pen_legend = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPH']['color_legend']),
+                                   width=self.cfg['GRAPH'].getint('width_legend'))
+        self.setBackground(self.cfg['GRAPH']['background_color'])
+
+    def setXLabel(self, text):
+        self.setLabel('bottom', text, color=self.cfg['GRAPH']['color_xlabel'])
+
+    def setYLabel(self, text):
+        self.setLabel('left', text, color=self.cfg['GRAPH']['color_ylabel'])
 
 
 class GraphMainWindow(QMainWindow, Ui_MainWindow):
@@ -212,8 +174,9 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         super(GraphMainWindow, self).__init__(*args, **kwargs)
         self.current_data_x = []
         self.current_data_y = []
-        self.soll_data = []
-        self.ist_data = []
+        self.compare_data_x = []
+        self.soll_data_y = []
+        self.ist_data_y = []
         self.cfg = config
         self.plc = PLC(self)
         self.plc.start()
@@ -222,41 +185,31 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.setupWindow()
         self.connect_componets()
 
-        pg.setConfigOptions(antialias=True)
+        self.graph = Graph(self.cfg)
 
-        self.graph = pg.PlotWidget(enableMenu=True)
-        self.graph.setMouseEnabled(x=True, y=False)
-        self.graph.enableAutoRange(x=True, y=True)
+        self.graphLayout.addWidget(self.graph)
 
-
-
-        self.pen_current = pg.mkPen(color=(255, 0, 0), width=2)
-        self.pen_soll = pg.mkPen(color=(0, 255, 0), width=2)
-        self.pen_ist = pg.mkPen(color=(0, 0, 255), width=2)
-        self.pen_zero = pg.mkPen(color=(255, 0, 0,150), width=1)
-        self.graph.setBackground((255,255,255,0))
-        self.graph.showGrid(x=True, y=True)
-        styles = {'color': 'r', 'font-size': '20px'}
-        self.graph.setLabel('left', 'Acc [m/s]', **styles)
-        self.graph.setLabel('bottom', 'Datenpunkte', **styles)
-        self.graph.addLegend()
-
-        self.plot = pg.PlotCurveItem(clickable=True)
-        self.plot.setData({'x':np.array([1,2,3]),'y':np.array([1,2,3])})
-        self.graph.addItem(plot)
-
-
-
-
-
-        self.mplLayout.addWidget(self.graph)
+        self.pen_zero = pg.mkPen(color=(255, 255, 0), width=1)
+        self.pen_current = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPH']['color_current']),
+                                    width=self.cfg['GRAPH'].getint('width_current'))
+        self.pen_soll = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPH']['color_compare_soll']),
+                                 width=self.cfg['GRAPH'].getint('width_compare_soll'))
+        self.pen_ist = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPH']['color_compare_ist']),
+                                width=self.cfg['GRAPH'].getint('width_compare_ist'))
 
         self.show()
 
     def setupWindow(self):
-        self.setWindowIcon(QtGui.QIcon('./assets/primary-chart-line.png'))
+        self.setWindowIcon(QtGui.QIcon(self.cfg['GUI']['window_icon']))
         self.setWindowTitle(self.cfg['GUI']['title'])
-        self.logo.setPixmap(QtGui.QPixmap('./assets/logo.png'))
+        self.logo.setPixmap(QtGui.QPixmap(self.cfg['GUI']['logo']))
+
+        self.monitor = QDesktopWidget().screenGeometry(self.cfg['GUI'].getint('monitor_nr'))
+        self.move(self.monitor.left(), self.monitor.top())
+
+        if self.cfg['GUI'].getboolean('always_top'): self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
+        if self.cfg['GUI'].getboolean('maximized'): self.showMaximized()
+        if self.cfg['GUI'].getboolean('fullscreen'): self.showFullScreen()
 
     def connect_componets(self):
         self.btn_load.clicked.connect(self.handle_btn_load)
@@ -265,11 +218,6 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_tool_cursor.clicked.connect(self.handle_btn_tool_cursor)
         self.btn_tool_edit.clicked.connect(self.handle_btn_tool_edit)
         self.btn_submit_plc.clicked.connect(self.handle_btn_submit_plc)
-        self.btn_clear.clicked.connect(self.handle_btn_clear)
-
-    def handle_btn_clear(self):
-        self.graph.clear()
-        self.graph.setTitle('')
 
     def handle_btn_load(self):
         options = QFileDialog.Options()
@@ -282,14 +230,15 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                 reader = csv.reader(file, delimiter=';')
                 self.graph.current_data = []
                 for row in reader:
-                    self.current_data_x.append(int(row[0]))
-                    self.current_data_y.append(float(row[1]))
+                    self.current_data_x.append(float(row[0].replace(',', '.')))
+                    self.current_data_y.append(float(row[1].replace(',', '.')))
 
             self.statusbar.showMessage(self.cfg['STRINGS']['status_csv_loaded'])
             self.graph.clear()
-            self.graph.plot(self.current_data_x, self.current_data_y, pen=self.pen_current, name='File')
-            self.graph.setTitle('Current')
-
+            self.graph.plot(self.current_data_x, self.current_data_y, pen=self.pen_current,
+                            name=self.cfg['STRINGS']['graph_current_label'])
+            self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
+            self.graph.setTitle(self.cfg['STRINGS']['graph_title_current'])
 
     def handle_btn_save(self):
         options = QFileDialog.Options()
@@ -298,19 +247,29 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         fileName, fileType = QFileDialog.getSaveFileName(self, self.cfg['STRINGS']['csv_save_title'], "", "CSV (*.csv)",
                                                          options=options)
         if fileName:
+            khz = self.cfg['GRAPH'].getint('resolution_khz')
             with open(fileName, 'w', encoding='utf-8', newline='') as file:
                 writer = csv.writer(file, delimiter=';')
-                writer.writerows(self.graph.current_data)
+                for count, i in enumerate(self.current_data_y):
+                    writer.writerow(
+                        [format((count + 1) / (khz * 1000), f'.{self.cfg["GRAPH"]["csv_export_float_precision_x"]}f'),
+                         format(i, f'.{self.cfg["GRAPH"]["csv_export_float_precision_y"]}f')])
+
             self.statusbar.showMessage(self.cfg['STRINGS']['status_csv_saved'])
 
     def handle_btn_compare(self):
         self.graph.clear()
-        self.soll_data, self.ist_data = self.plc.read_soll_ist_data()
-        self.graph.plot(self.soll_data, pen=self.pen_soll, name='Soll')
-        self.graph.plot(self.ist_data, pen=self.pen_ist, name='Ist')
-        self.graph.setTitle('Soll-Ist')
-        self.graph.addItem(pg.InfiniteLine((0, 0), pen=self.pen_zero))
-        self.graph.addItem(pg.InfiniteLine((0, 0),angle=0, pen=self.pen_zero))
+        self.current_data_x = []
+        self.current_data_y = []
+        khz = self.cfg['GRAPH'].getint('resolution_khz')
+        self.soll_data_y, self.ist_data_y = self.plc.read_soll_ist_data()
+        self.graph.setTitle(self.cfg['STRINGS']['graph_title_compare'])
+        self.graph.plot([(count + 1) / (khz * 1000) for count in range(len(self.ist_data_y))], self.ist_data_y,
+                        pen=self.pen_ist, name=self.cfg['STRINGS']['graph_ist_label'])
+        self.graph.plot([(count + 1) / (khz * 1000) for count in range(len(self.soll_data_y))], self.soll_data_y,
+                        pen=self.pen_soll, name=self.cfg['STRINGS']['graph_soll_label'])
+        self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
+        self.statusbar.showMessage(self.cfg['STRINGS']['status_plc_data_loaded'])
 
     def handle_btn_tool_cursor(self):
         if self.btn_tool_cursor.isChecked():
@@ -335,6 +294,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.statusbar.showMessage(self.cfg['STRINGS']['status_plc_data_submit'])
         else:
             self.statusbar.showMessage(self.cfg['STRINGS']['status_plc_data_submit_error'])
+
 
 if __name__ == '__main__':
     config = ConfigParser()

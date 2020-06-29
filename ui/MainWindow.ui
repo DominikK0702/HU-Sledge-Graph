@@ -302,7 +302,7 @@ QComboBox QAbstractItemView {
              <number>7</number>
             </property>
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_Tools" stretch="0,0,0">
+             <layout class="QVBoxLayout" name="verticalLayout_Tools" stretch="0,0">
               <property name="spacing">
                <number>0</number>
               </property>
@@ -335,13 +335,6 @@ QComboBox QAbstractItemView {
                 </property>
                 <property name="checkable">
                  <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btn_clear">
-                <property name="text">
-                 <string>Clear</string>
                 </property>
                </widget>
               </item>
@@ -406,7 +399,7 @@ QComboBox QAbstractItemView {
        <number>0</number>
       </property>
       <item>
-       <widget class="QWidget" name="mplWidget" native="true">
+       <widget class="QWidget" name="graphWidget" native="true">
         <property name="styleSheet">
          <string notr="true">background-color: white</string>
         </property>
@@ -427,7 +420,7 @@ QComboBox QAbstractItemView {
           <number>0</number>
          </property>
          <item>
-          <layout class="QVBoxLayout" name="mplLayout">
+          <layout class="QVBoxLayout" name="graphLayout">
            <property name="spacing">
             <number>0</number>
            </property>
