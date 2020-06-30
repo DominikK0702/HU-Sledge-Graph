@@ -49,20 +49,19 @@ def get_last_trace(ip, csvfilepath, user='SINAMICS', passw=''):
                 'User-Agent'               : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
             }
 
-        res = requests.get(f'http://{ip}/DRVTRACEFILEAPP/{tracefile}', headers=headers, cookies=cookies,
-                           allow_redirects=True)
+            res = requests.get(f'http://{ip}/DRVTRACEFILEAPP/{tracefile}', headers=headers, cookies=cookies,
+                               allow_redirects=True)
 
-        if res.status_code == 200:
+            if res.status_code == 200:
+                with open('./export/tmp.ACX.GZ', 'wb') as f:
+                    f.write(res.content)
 
-            with open('export/tmp.ACX.GZ', 'wb') as f:
-                f.write(res.content)
-
-            subprocess.call(['Convert_SINAMICS_trace_CSV.exe', 'tmp.ACX.GZ', '-sep', 'SEMICOLON', '-out', csvfilepath])
-            return csvfilepath
+                subprocess.call(
+                    ['./bin/Convert_SINAMICS_trace_CSV.exe', './export/tmp.ACX.GZ', '-sep', 'SEMICOLON', '-out',
+                     csvfilepath])
+                return csvfilepath
     except Exception as e:
         return
-
-
 
 
 if __name__ == '__main__':
