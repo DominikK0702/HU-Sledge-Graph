@@ -11,6 +11,7 @@ from MainWindow import Ui_MainWindow
 from PLC import PLC
 from Graph import Graph
 import pyqtgraph as pg
+import TraceHelper
 
 
 class GraphMainWindow(QMainWindow, Ui_MainWindow):
@@ -21,6 +22,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.compare_data_x = []
         self.soll_data_y = []
         self.ist_data_y = []
+        self.current_trace = TraceHelper.Trace()
         self.cfg = config
 
         self.setupUi(self)
@@ -63,6 +65,10 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_tool_cursor.clicked.connect(self.handle_btn_tool_cursor)
         self.btn_tool_edit.clicked.connect(self.handle_btn_tool_edit)
         self.btn_submit_plc.clicked.connect(self.handle_btn_submit_plc)
+        self.btn_trace_loadfile.clicked.connect(self.handle_btn_trace_loadfile)
+        self.btn_trace_loadlast.clicked.connect(self.handle_btn_trace_loadlast)
+        self.btn_trace_save.clicked.connect(self.handle_btn_trace_save)
+        self.btn_trace_clear.clicked.connect(self.handle_btn_trace_clear)
 
     def handle_btn_load(self):
         options = QFileDialog.Options()
@@ -126,6 +132,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_tool_edit.setChecked(False)
         self.btn_tool_cursor.setChecked(False)
         self.graph.cursor.enabled(False)
+
         self.graph.clear()
         self.current_data_x = []
         self.current_data_y = []
@@ -135,7 +142,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         # self.graph.plot([float(i[0].replace(',','.'))/1000 for i in data], [float(i[4].replace(',','.')) for i in data],
         #                pen=self.pen_ist, name=self.cfg['STRINGS']['graph_ist_label'])
         self.graph.plot([float(i[0].replace(',', '.')) / 1000 for i in data],
-                        savgol_filter([float(i[4].replace(',', '.')) for i in data], 51, 5),
+                        savgol_filter([float(i[4].replace(',', '.')) for i in data], 51, 3),
                         pen=self.pen_ist, name=self.cfg['STRINGS']['graph_ist_label'])
         self.graph.plot([(count + 1) / (khz * 1000) for count in range(len(self.soll_data_y))],
                         [i * 60 for i in self.soll_data_y],
@@ -166,12 +173,50 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             except Exception as e:
                 print(e)
 
+    def handle_btn_trace_loadfile(self):
+        options = QFileDialog.Options()
+        if not self.cfg['GUI'].getboolean('use_native_filedialog'):
+            options |= QFileDialog.DontUseNativeDialog
+        fileName, fileType = QFileDialog.getOpenFileName(self, self.cfg['STRINGS']['trace_load_title'], "",
+                                                         "Trace ACX (*.ACX.GZ);;Trace CSV (*.csv)",
+                                                         options=options)
+        if fileName and fileType == 'Trace ACX (*.ACX.GZ)':
+            self.current_trace.load_trace_acx(fileName)
+        elif fileName and fileType == 'Trace CSV (*.csv)':
+            self.current_trace.load_trace_csv(fileName)
+
+        self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_file_loaded'])
+        self.graph.plot_trace(self.current_trace)
+
+    def handle_btn_trace_loadlast(self):
+        self.current_trace.load_trace_csv('./export/trace.csv')
+        self.graph.plot_trace(self.current_trace)
+        self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_last_loaded'])
+
+    def handle_btn_trace_clear(self):
+        self.current_trace.clear()
+        self.graph.clear()
+        self.graph.setXLabel('')
+        self.graph.setYLabel('')
+        self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_cleared'])
+
+    def handle_btn_trace_save(self):
+        if self.current_trace.datapoints <= 0:
+            return
+        options = QFileDialog.Options()
+        if not self.cfg['GUI'].getboolean('use_native_filedialog'):
+            options |= QFileDialog.DontUseNativeDialog
+        fileName, fileType = QFileDialog.getSaveFileName(self, self.cfg['STRINGS']['trace_save_title'], "",
+                                                         "CSV (*.csv)",
+                                                         options=options)
+        if fileName:
+            self.current_trace.save_to_csv(fileName)
+            self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_saved'])
+
 
 if __name__ == '__main__':
     config = ConfigParser()
     config.read('config.ini', encoding='utf-8')
     app = QApplication(sys.argv)
-    # plc = S7Conn(config['PLC']['ip'])
     gui = GraphMainWindow(config)
-
     sys.exit(app.exec())

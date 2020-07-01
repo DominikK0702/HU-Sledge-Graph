@@ -62,8 +62,3 @@ def get_last_trace(ip, csvfilepath, user='SINAMICS', passw=''):
                 return csvfilepath
     except Exception as e:
         return
-
-
-if __name__ == '__main__':
-    get_last_trace('169.254.11.22', 'C:\\Users\\Anlagenrechner\\Desktop\\GraphEditor\\exp.csv')
-    print(1)

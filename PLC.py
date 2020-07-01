@@ -1,5 +1,6 @@
 from PyQt5 import QtCore
 import matplotlib.pyplot as plt
+import csv
 from scipy.signal import savgol_filter
 from SinamicsExport import get_last_trace
 from PyLcSnap7.PLC import S7Conn
@@ -100,9 +101,11 @@ class PLC(QtCore.QThread):
         khz = self.cfg['GRAPH'].getint('resolution_khz')
         soll_data = [i * 60 * 0.981 for i in self.array_soll.read()]
         soll_x = [((count + 1) / (khz * 1000) * 1000) for count in range(len(soll_data))]
+        pulsdauer = soll_x[-1] + 150
+        ist_x = [float(i[self.cfg['GRAPH'].getint('trace_x_index')].replace(',', '.')) for i in data if
+                 float(i[self.cfg['GRAPH'].getint('trace_x_index')].replace(',', '.')) <= pulsdauer]
 
-        ist_x = [float(i[self.cfg['GRAPH'].getint('trace_x_index')].replace(',', '.')) for i in data]
-        ist_data = [float(i[self.cfg['GRAPH'].getint('trace_y_index')].replace(',', '.')) for i in data]
+        ist_data = [float(i[self.cfg['GRAPH'].getint('trace_y_index')].replace(',', '.')) for i in data][:len(ist_x)]
         ist_data_filtered = savgol_filter(ist_data, 51, 5)
 
         fig = plt.figure(dpi=self.dpi, figsize=(self.size_x.read() / self.dpi, self.size_y.read() / self.dpi))

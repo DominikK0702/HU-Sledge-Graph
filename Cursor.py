@@ -14,7 +14,6 @@ class Cursor:
         self.cursorhLine = pg.InfiniteLine(angle=0, movable=False, pen=self.pen_h)
         self.cursorvLine = pg.InfiniteLine(angle=90, movable=False, pen=self.pen_v)
 
-
     def enabled(self, state):
         self.active = state
         if state:
@@ -23,7 +22,6 @@ class Cursor:
         else:
             self.graph.removeItem(self.cursorhLine)
             self.graph.removeItem(self.cursorvLine)
-
 
     def set_cursor_pos(self, pos):
         self.cursorvLine.setPos(pos.x())

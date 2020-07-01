@@ -2,6 +2,7 @@ import pyqtgraph as pg
 from Cursor import Cursor
 from PIL import ImageColor
 
+
 class Graph(pg.PlotWidget):
     def __init__(self, cfg):
         self.cfg = cfg
@@ -17,6 +18,15 @@ class Graph(pg.PlotWidget):
         self.addLegend()
         self.pen_legend = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPH']['color_legend']),
                                    width=self.cfg['GRAPH'].getint('width_legend'))
+        self.pen_trace_velocity = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPHTRACE']['color_axis_velocity']),
+                                           width=self.cfg['GRAPHTRACE'].getint('width_axis_velocity'))
+        self.pen_trace_2 = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPHTRACE']['color_axis_2']),
+                                    width=self.cfg['GRAPHTRACE'].getint('width_axis_2'))
+        self.pen_trace_voltage = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPHTRACE']['color_axis_voltage']),
+                                          width=self.cfg['GRAPHTRACE'].getint('width_axis_voltage'))
+        self.pen_trace_acceleration = pg.mkPen(
+            color=ImageColor.getrgb('#' + self.cfg['GRAPHTRACE']['color_axis_acceleration']),
+            width=self.cfg['GRAPHTRACE'].getint('width_axis_acceleration'))
         self.setBackground(self.cfg['GRAPH']['background_color'])
         self.cursor = Cursor(self)
         self.proxy = pg.SignalProxy(self.scene().sigMouseMoved, rateLimit=120, slot=self.mouseMoved)
@@ -37,3 +47,12 @@ class Graph(pg.PlotWidget):
 
     def setYLabel(self, text):
         self.setLabel('left', text, color=self.cfg['GRAPH']['color_ylabel'])
+
+    def plot_trace(self, trace):
+        self.plot(trace.get_axis_time(), trace.get_axis_acc_from_speed(filtered=True), pen=self.pen_trace_acceleration)
+        # self.plot(trace.get_axis_time(), trace.get_axis_2(), pen=self.pen_trace_2)
+        self.plot(trace.get_axis_time(), trace.get_axis_velocity(), pen=self.pen_trace_velocity)
+        self.plot(trace.get_axis_time(), trace.get_axis_voltage(), pen=self.pen_trace_voltage)
+
+        self.setXLabel(self.cfg['GRAPH']['name_trace_ax_x'])
+        self.setYLabel(self.cfg['GRAPH']['name_trace_ax_y'])
