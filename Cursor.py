@@ -7,6 +7,7 @@ class Cursor:
         self.graph = graph
         self.cfg = self.graph.cfg
         self.active = False
+        self.current_pos = None
         self.pen_h = pg.mkPen(color=ImageColor.getrgb(f"#{self.cfg['GRAPHCURSOR']['color_h']}"),
                               width=self.cfg['GRAPHCURSOR'].getint('width_h'))
         self.pen_v = pg.mkPen(color=ImageColor.getrgb(f"#{self.cfg['GRAPHCURSOR']['color_v']}"),
@@ -24,5 +25,6 @@ class Cursor:
             self.graph.removeItem(self.cursorvLine)
 
     def set_cursor_pos(self, pos):
+        self.current_pos = pos
         self.cursorvLine.setPos(pos.x())
         self.cursorhLine.setPos(pos.y())

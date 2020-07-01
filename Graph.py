@@ -31,6 +31,11 @@ class Graph(pg.PlotWidget):
         self.cursor = Cursor(self)
         self.proxy = pg.SignalProxy(self.scene().sigMouseMoved, rateLimit=120, slot=self.mouseMoved)
 
+        self.plotitem_trace_acc = None
+        self.plotitem_trace_2 = None
+        self.plotitem_trace_vel = None
+        self.plotitem_trace_vol = None
+
     def mouseClicked(self, evt):
         clickEvent = evt[0]
         print(clickEvent.button())
@@ -49,10 +54,20 @@ class Graph(pg.PlotWidget):
         self.setLabel('left', text, color=self.cfg['GRAPH']['color_ylabel'])
 
     def plot_trace(self, trace):
-        self.plot(trace.get_axis_time(), trace.get_axis_acc_from_speed(filtered=True), pen=self.pen_trace_acceleration)
-        # self.plot(trace.get_axis_time(), trace.get_axis_2(), pen=self.pen_trace_2)
-        self.plot(trace.get_axis_time(), trace.get_axis_velocity(), pen=self.pen_trace_velocity)
-        self.plot(trace.get_axis_time(), trace.get_axis_voltage(), pen=self.pen_trace_voltage)
+        self.clear()
+        self.plotitem_trace_acc = self.plot(trace.get_axis_time(), trace.get_axis_acc_from_speed(filtered=True),
+                                            pen=self.pen_trace_acceleration,
+                                            name=self.cfg['GRAPHTRACE']['label_axis_acceleration'])
+
+        self.plotitem_trace_vel = self.plot(trace.get_axis_time(), trace.get_axis_velocity(),
+                                            pen=self.pen_trace_velocity,
+                                            name=self.cfg['GRAPHTRACE']['label_axis_velocity'])
+
+        self.plotitem_trace_vol = self.plot(trace.get_axis_time(), trace.get_axis_voltage(), pen=self.pen_trace_voltage,
+                                            name=self.cfg['GRAPHTRACE']['label_axis_voltage'])
+
+        self.plotitem_trace_2 = self.plot(trace.get_axis_time(), trace.get_axis_2(), pen=self.pen_trace_2,
+                                          name=self.cfg['GRAPHTRACE']['label_axis_2'])
 
         self.setXLabel(self.cfg['GRAPH']['name_trace_ax_x'])
         self.setYLabel(self.cfg['GRAPH']['name_trace_ax_y'])
