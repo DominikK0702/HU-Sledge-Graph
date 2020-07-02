@@ -1,22 +1,24 @@
-import csv
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtCore, QtGui
+import numpy as np
 
-x = []
-y = []
+# Enable antialiasing for prettier plots
+pg.setConfigOptions(antialias=True)
 
-with open('.\\PulsDaten\\Crash_2_60_2019-10-29_16kHz_15g.csv', 'r', encoding='utf-8') as f:
-    reader = csv.reader(f,delimiter=';')
-    for row in reader:
-        x.append(float(row[0].replace(',','.')))
-        y.append(float(row[1].replace(',', '.')))
+w = pg.GraphicsLayoutWidget(show=True)
+w.setWindowTitle('pyqtgraph example: GraphItem')
 
 
-speed_kmh = 0
-speed_ms = 0
-last_t = 0
-for cnt, t in enumerate(x):
-    current_g = y[cnt]
-    inc_kmh = current_g * 9.81 * (t - last_t) * 3.6
-    speed_kmh += inc_kmh
-    last_t = t
-speed_ms = speed_kmh/3.6
-print(speed_kmh)
+p1 = w.addPlot(row=1,col=0)
+p2 = w.addPlot(row=2,col=0)
+
+
+
+
+
+## Start Qt event loop unless running in interactive mode or using pyside.
+if __name__ == '__main__':
+    import sys
+
+    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
+        QtGui.QApplication.instance().exec_()

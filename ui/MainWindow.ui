@@ -420,6 +420,18 @@ QComboBox QAbstractItemView {
                 </property>
                </widget>
               </item>
+              <item>
+               <widget class="QPushButton" name="btn_autorange">
+                <property name="font">
+                 <font>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>AutoRange</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
            </layout>
@@ -536,34 +548,35 @@ QComboBox QAbstractItemView {
        <number>0</number>
       </property>
       <item>
-       <widget class="QWidget" name="graphWidget" native="true">
-        <property name="styleSheet">
-         <string notr="true">background-color: white</string>
+       <widget class="QTabWidget" name="tabWidget">
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+         </font>
         </property>
-        <layout class="QVBoxLayout" name="verticalLayout_4">
-         <property name="spacing">
-          <number>0</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <layout class="QVBoxLayout" name="graphLayout" stretch="">
-           <property name="spacing">
-            <number>0</number>
-           </property>
-          </layout>
-         </item>
-        </layout>
+        <property name="currentIndex">
+         <number>1</number>
+        </property>
+        <widget class="QWidget" name="pulse">
+         <attribute name="title">
+          <string>Puls</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <layout class="QVBoxLayout" name="tab_layout_pulse"/>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="trace">
+         <attribute name="title">
+          <string>Trace</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <layout class="QVBoxLayout" name="tab_layout_trace"/>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </item>
      </layout>

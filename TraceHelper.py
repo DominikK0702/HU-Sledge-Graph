@@ -1,6 +1,5 @@
 import csv
 import subprocess
-import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 
 
@@ -14,7 +13,8 @@ def diff(array, td):
 
 
 def offset_x_soll(array, steps):
-    return [i / 16000 for i in range(steps, len(array) + steps)]
+    faktor = 1000
+    return [(i / 16000) * faktor for i in range(steps, len(array) + steps)]
 
 
 class Trace:
@@ -75,9 +75,9 @@ class Trace:
                     header = False
                     continue
                 self.axis_x.append(float(row[0].replace(',', '.')) / 1000)  # Conver from ms to s
-                self.axis_velocity.append(float(row[1].replace(',', '.'))/1000)
-                self.axis_2.append(float(row[2].replace(',', '.'))*0.005)
-                self.axis_voltage.append((float(row[3].replace(',', '.'))*25)-12000)
+                self.axis_velocity.append(float(row[1].replace(',', '.')) / 1000)
+                self.axis_2.append(float(row[2].replace(',', '.')) * 0.005)
+                self.axis_voltage.append((float(row[3].replace(',', '.')) * 25) - 12000)
                 self.axis_acceleration.append(float(row[4].replace(',', '.')))
         self.datapoints = len(self.axis_x)
 
@@ -91,7 +91,7 @@ class Trace:
         return self.axis_2
 
     def get_axis_voltage(self):
-        return savgol_filter(self.axis_voltage,51,3)
+        return savgol_filter(self.axis_voltage, 51, 3)
 
     def get_axis_acceleration(self):
         return self.axis_acceleration

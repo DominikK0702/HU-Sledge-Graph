@@ -5,6 +5,7 @@ from scipy.signal import savgol_filter
 from SinamicsExport import get_last_trace
 from PyLcSnap7.PLC import S7Conn
 from PyLcSnap7 import Smarttags
+from TraceHelper import Trace, offset_x_soll
 
 
 class PLC(QtCore.QThread):
@@ -88,25 +89,18 @@ class PLC(QtCore.QThread):
 
     def plot_kompl(self):
         filename = get_last_trace(self.cfg['PLC']['ip_cu320'], './export/trace.csv')
-        header = None
-        data = []
-        with open(filename, 'r', encoding='utf-8') as csvfile:
-            reader = csv.reader(csvfile, delimiter=';')
-            for i, row in enumerate(reader):
-                if i == 0:
-                    header = row
-                else:
-                    data.append(row)
-
+        trace = Trace()
+        trace.load_trace_csv(filename)
         khz = self.cfg['GRAPH'].getint('resolution_khz')
-        soll_data = [i * 60 * 0.981 for i in self.array_soll.read()]
-        soll_x = [((count + 1) / (khz * 1000) * 1000) for count in range(len(soll_data))]
-        pulsdauer = soll_x[-1] + 150
-        ist_x = [float(i[self.cfg['GRAPH'].getint('trace_x_index')].replace(',', '.')) for i in data if
-                 float(i[self.cfg['GRAPH'].getint('trace_x_index')].replace(',', '.')) <= pulsdauer]
 
-        ist_data = [float(i[self.cfg['GRAPH'].getint('trace_y_index')].replace(',', '.')) for i in data][:len(ist_x)]
-        ist_data_filtered = savgol_filter(ist_data, 51, 5)
+        soll_data = [i * 60 * 0.981 for i in self.array_soll.read()]
+        offset = 30
+        soll_x = offset_x_soll(soll_data, offset)
+        pulsdauer = soll_x[-1] + 150
+
+        ist_x = [i * 1000 for i in trace.get_axis_time() if i * 1000 <= pulsdauer]
+
+        ist_data = trace.get_axis_acc_from_speed(filtered=True)[:len(ist_x)]
 
         fig = plt.figure(dpi=self.dpi, figsize=(self.size_x.read() / self.dpi, self.size_y.read() / self.dpi))
         fig.subplots_adjust(top=self.cfg['PLCGRAPH'].getfloat('adjust_top'),
@@ -122,7 +116,7 @@ class PLC(QtCore.QThread):
         ax.plot(soll_x, soll_data, linewidth=self.soll_linewidth.read(),
                 color='#' + self.soll_color.read())
 
-        ax.plot(ist_x, ist_data_filtered, linewidth=self.ist_linewidth.read(),
+        ax.plot(ist_x, ist_data, linewidth=self.ist_linewidth.read(),
                 color='#' + self.ist_color.read())
         fig.savefig(self.var_url_02.read(), dpi=self.dpi)
         fig.savefig(self.var_url_03.read(), dpi=self.dpi)
@@ -166,4 +160,4 @@ class PLC(QtCore.QThread):
 
             except Exception as e:
                 print(e)
-            self.msleep(200)
+            self.msleep(self.cfg['PLC'].getint('refresh_delay_ms'))

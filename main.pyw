@@ -9,7 +9,7 @@ from PyQt5 import QtGui
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget
 from MainWindow import Ui_MainWindow
 from PLC import PLC
-from Graph import Graph
+from Graph import Graph, TracePlot
 import pyqtgraph as pg
 import TraceHelper
 
@@ -22,19 +22,27 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.compare_data_x = []
         self.soll_data_y = []
         self.ist_data_y = []
+        self.edit_mode = False
         self.current_trace = TraceHelper.Trace()
         self.cfg = config
 
         self.setupUi(self)
         self.setupWindow()
-        self.connect_componets()
+
 
         self.plc = PLC(self)
         self.plc.start()
 
-        self.graph = Graph(self.cfg)
+        self.trace_plot = TracePlot(self.cfg)
 
-        self.graphLayout.addWidget(self.graph)
+        self.graph = Graph(self.cfg)
+        self.connect_componets()
+
+        self.tab_layout_pulse.addWidget(self.graph)
+
+        self.tab_layout_trace.addWidget(self.trace_plot)
+
+
 
         self.pen_zero = pg.mkPen(color=(255, 255, 0), width=1)
         self.pen_current = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPH']['color_current']),
@@ -69,6 +77,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_trace_loadlast.clicked.connect(self.handle_btn_trace_loadlast)
         self.btn_trace_save.clicked.connect(self.handle_btn_trace_save)
         self.btn_trace_clear.clicked.connect(self.handle_btn_trace_clear)
+        self.btn_autorange.clicked.connect(self.trace_plot.autoRange)
 
     def handle_btn_load(self):
         options = QFileDialog.Options()
@@ -160,9 +169,10 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def handle_btn_tool_edit(self):
         if self.btn_tool_edit.isChecked():
             self.btn_tool_cursor.setChecked(False)
+            self.graph.toggle_edit_mode(True)
             self.graph.cursor.enabled(False)
         else:
-            pass
+            self.graph.toggle_edit_mode(False)
 
     def handle_btn_submit_plc(self):
         done = False
@@ -184,14 +194,23 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.current_trace.load_trace_acx(fileName)
         elif fileName and fileType == 'Trace CSV (*.csv)':
             self.current_trace.load_trace_csv(fileName)
-
-        self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_file_loaded'])
-        self.graph.plot_trace(self.current_trace)
+        if fileName:
+            self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_file_loaded'])
+            self.graph.plot_trace(self.current_trace)
 
     def handle_btn_trace_loadlast(self):
-        self.current_trace.load_trace_csv('./export/trace.csv')
-        self.graph.plot_trace(self.current_trace)
-        self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_last_loaded'])
+        try:
+
+            self.trace_plot.clear_trace()
+            self.trace_plot.load_trace_csv('./export/trace.csv')
+            self.trace_plot.set_viewmode(self.trace_plot.VM_MULTI)
+
+
+            #self.current_trace.load_trace_csv('./export/trace.csv')
+            #self.graph.plot_trace(self.current_trace)
+            self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_last_loaded'])
+        except Exception as e:
+            self.statusbar.showMessage(str(e))
 
     def handle_btn_trace_clear(self):
         self.current_trace.clear()
@@ -210,8 +229,11 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                                                          "CSV (*.csv)",
                                                          options=options)
         if fileName:
-            self.current_trace.save_to_csv(fileName)
-            self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_saved'])
+            try:
+                self.current_trace.save_to_csv(fileName)
+                self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_saved'])
+            except Exception as e:
+                self.statusbar.showMessage(str(e))
 
 
 if __name__ == '__main__':
