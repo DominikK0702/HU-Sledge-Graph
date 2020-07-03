@@ -29,20 +29,16 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.setupWindow()
 
-
         self.plc = PLC(self)
         self.plc.start()
 
-        self.trace_plot = TracePlot(self.cfg)
-
-        self.graph = Graph(self.cfg)
-        self.connect_componets()
+        self.trace_plot = TracePlot(self.cfg, self)
+        self.graph = Graph(self.cfg, self)
 
         self.tab_layout_pulse.addWidget(self.graph)
-
         self.tab_layout_trace.addWidget(self.trace_plot)
 
-
+        self.connect_componets()
 
         self.pen_zero = pg.mkPen(color=(255, 255, 0), width=1)
         self.pen_current = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPH']['color_current']),
@@ -103,6 +99,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                             name=self.cfg['STRINGS']['graph_current_label'])
             self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
             self.graph.enableAutoRange(x=True, y=True)
+            self.tabWidget.setCurrentIndex(0)
             self.graph.setTitle(self.cfg['STRINGS']['graph_title_current'])
 
     def handle_btn_save(self):
@@ -191,23 +188,15 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                                                          "Trace ACX (*.ACX.GZ);;Trace CSV (*.csv)",
                                                          options=options)
         if fileName and fileType == 'Trace ACX (*.ACX.GZ)':
-            self.current_trace.load_trace_acx(fileName)
+            self.trace_plot.load_trace_acx(fileName)
         elif fileName and fileType == 'Trace CSV (*.csv)':
-            self.current_trace.load_trace_csv(fileName)
+            self.trace_plot.load_trace_csv(fileName)
         if fileName:
             self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_file_loaded'])
-            self.graph.plot_trace(self.current_trace)
 
     def handle_btn_trace_loadlast(self):
         try:
-
-            self.trace_plot.clear_trace()
             self.trace_plot.load_trace_csv('./export/trace.csv')
-            self.trace_plot.set_viewmode(self.trace_plot.VM_MULTI)
-
-
-            #self.current_trace.load_trace_csv('./export/trace.csv')
-            #self.graph.plot_trace(self.current_trace)
             self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_last_loaded'])
         except Exception as e:
             self.statusbar.showMessage(str(e))
@@ -222,6 +211,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def handle_btn_trace_save(self):
         if self.current_trace.datapoints <= 0:
             return
+        self.mainwindow.tabWidget.setCurrentIndex(0)
         options = QFileDialog.Options()
         if not self.cfg['GUI'].getboolean('use_native_filedialog'):
             options |= QFileDialog.DontUseNativeDialog

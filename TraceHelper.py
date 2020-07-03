@@ -24,7 +24,7 @@ class Trace:
         self.header = None
         self.axis_x = []
         self.axis_velocity = []
-        self.axis_2 = []
+        self.axis_way = []
         self.axis_voltage = []
         self.axis_acceleration = []
 
@@ -34,7 +34,7 @@ class Trace:
         self.header = None
         self.axis_x = []
         self.axis_velocity = []
-        self.axis_2 = []
+        self.axis_way = []
         self.axis_voltage = []
         self.axis_acceleration = []
 
@@ -45,7 +45,7 @@ class Trace:
             for index, row in enumerate(self.axis_x):
                 writer.writerow([row,
                                  self.axis_velocity[index],
-                                 self.axis_2[index],
+                                 self.axis_way[index],
                                  self.axis_voltage[index],
                                  self.axis_acceleration[index]
                                  ])
@@ -63,7 +63,7 @@ class Trace:
         self.datapoints = 0
         self.axis_x = []
         self.axis_velocity = []
-        self.axis_2 = []
+        self.axis_way = []
         self.axis_voltage = []
         self.axis_acceleration = []
         if filename: self.filename = filename
@@ -76,7 +76,7 @@ class Trace:
                     continue
                 self.axis_x.append(float(row[0].replace(',', '.')) / 1000)  # Conver from ms to s
                 self.axis_velocity.append(float(row[1].replace(',', '.')) / 1000)
-                self.axis_2.append(float(row[2].replace(',', '.')) * 0.005)
+                self.axis_way.append(float(row[2].replace(',', '.')) * 0.005)
                 self.axis_voltage.append((float(row[3].replace(',', '.')) * 25) - 12000)
                 self.axis_acceleration.append(float(row[4].replace(',', '.')))
         self.datapoints = len(self.axis_x)
@@ -87,11 +87,11 @@ class Trace:
     def get_axis_velocity(self):
         return self.axis_velocity
 
-    def get_axis_2(self):
-        return self.axis_2
+    def get_axis_way(self):
+        return self.axis_way
 
     def get_axis_voltage(self):
-        return savgol_filter(self.axis_voltage, 51, 3)
+        return self.axis_voltage
 
     def get_axis_acceleration(self):
         return self.axis_acceleration

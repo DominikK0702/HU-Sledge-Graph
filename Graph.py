@@ -3,99 +3,248 @@ from Cursor import Cursor
 from TraceHelper import Trace
 from PIL import ImageColor
 
+
 class TraceAxis:
-    def __init__(self, traceplot):
+    def __init__(self, traceplot, axisname):
         self.trace_plot = traceplot
+        self.name = axisname
         self.enabled = False
         self.axis = None
+        self.pen = None
 
-    def addPlot(self, row, col, title):
-        self.axis = self.trace_plot.addPlot(row=row, col=col, title=title)
+    def set_pen(self, hexrgb, width):
+        self.pen = pg.mkPen(color='#' + hexrgb, width=1)
 
-    def plot(self, datax, datay):
+    def addPlot(self, row, col):
+        self.axis = self.trace_plot.addPlot(row=row, col=col, title=self.name)
+
+    def remove(self):
+        self.trace_plot.removeItem(self.axis)
+
+    def plot(self, datax, datay, pen=None):
         if self.axis is not None:
-            self.axis.plot(datax, datay)
+            if pen is None:
+                pen = self.pen
+            self.axis.plot(datax, datay, pen=pen)
 
     def clearPlot(self):
         self.axis.clear()
-        self.axis = None
 
-    def linkY(self, axis):
+    def linkX(self, axis):
         self.axis.setXLink(axis.axis)
+
 
 class TracePlot(pg.GraphicsLayoutWidget):
     VM_MULTI = 0
     VM_SINGLE = 1
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, mainwindow):
         self.cfg = cfg
+        self.mainwindow = mainwindow
         super(TracePlot, self).__init__()
         self.viewmode = TracePlot.VM_MULTI
         self.plot_active = False
         self.config()
         self.trace = Trace()
-        self.axis_01 = TraceAxis(self)
-        self.axis_02 = TraceAxis(self)
-        self.axis_03 = TraceAxis(self)
-        self.axis_04 = TraceAxis(self)
+        self.active_axis = []
 
     def config(self):
-        self.setBackground((255,255,255))
+        self.setBackground((255, 255, 255))
+        self.connect_btns()
+
+    def connect_btns(self):
+        self.mainwindow.cb_trace_ax_way.clicked.connect(self.change_axis)
+        self.mainwindow.cb_trace_ax_vel.clicked.connect(self.change_axis)
+        self.mainwindow.cb_trace_ax_voltage.clicked.connect(self.change_axis)
+        self.mainwindow.cb_trace_ax_acc_way.clicked.connect(self.change_axis)
+        self.mainwindow.cb_trace_ax_acc_vel.clicked.connect(self.change_axis)
+        self.mainwindow.cb_trace_ax_acc_vel_filtered.clicked.connect(self.change_axis)
+        self.mainwindow.cb_trace_view.currentIndexChanged.connect(self.set_viewmode)
+
+    def change_axis(self):
+        if not self.plot_active:
+            return
+
+        for i in self.active_axis:
+            i.clearPlot()
+            i.remove()
+
+        self.active_axis = []
+
+        row = 1
+        if self.mainwindow.cb_trace_ax_way.isChecked():
+            trace_axis = TraceAxis(self, self.cfg['GRAPHTRACE']['label_axis_way'])
+            trace_axis.addPlot(row, 0)
+            trace_axis.set_pen(self.cfg['GRAPHTRACE']['color_axis_way'], self.cfg['GRAPHTRACE']['width_axis_way'], )
+            self.active_axis.append(trace_axis)
+            if self.viewmode == TracePlot.VM_MULTI:
+                row += 1
+            else:
+                return self.plot()
+
+        if self.mainwindow.cb_trace_ax_vel.isChecked():
+            trace_axis = TraceAxis(self, self.cfg['GRAPHTRACE']['label_axis_velocity'])
+            trace_axis.addPlot(row, 0)
+            trace_axis.set_pen(self.cfg['GRAPHTRACE']['color_axis_velocity'],
+                               self.cfg['GRAPHTRACE']['width_axis_velocity'], )
+            self.active_axis.append(trace_axis)
+            if self.viewmode == TracePlot.VM_MULTI:
+                row += 1
+            else:
+                return self.plot()
+
+        if self.mainwindow.cb_trace_ax_voltage.isChecked():
+            trace_axis = TraceAxis(self, self.cfg['GRAPHTRACE']['label_axis_voltage'])
+            trace_axis.addPlot(row, 0)
+            trace_axis.set_pen(self.cfg['GRAPHTRACE']['color_axis_voltage'],
+                               self.cfg['GRAPHTRACE']['width_axis_voltage'], )
+            self.active_axis.append(trace_axis)
+            if self.viewmode == TracePlot.VM_MULTI:
+                row += 1
+            else:
+                return self.plot()
+
+        if self.mainwindow.cb_trace_ax_acc_way.isChecked():
+            trace_axis = TraceAxis(self, self.cfg['GRAPHTRACE']['label_axis_acc_way'])
+            trace_axis.addPlot(row, 0)
+            trace_axis.set_pen(self.cfg['GRAPHTRACE']['color_axis_acc_way'],
+                               self.cfg['GRAPHTRACE']['width_axis_acc_way'], )
+            self.active_axis.append(trace_axis)
+            if self.viewmode == TracePlot.VM_MULTI:
+                row += 1
+            else:
+                return self.plot()
+
+        if self.mainwindow.cb_trace_ax_acc_vel.isChecked():
+            trace_axis = TraceAxis(self, self.cfg['GRAPHTRACE']['label_axis_acc_vel'])
+            trace_axis.addPlot(row, 0)
+            trace_axis.set_pen(self.cfg['GRAPHTRACE']['color_axis_acc_vel'],
+                               self.cfg['GRAPHTRACE']['width_axis_acc_vel'], )
+            self.active_axis.append(trace_axis)
+            if self.viewmode == TracePlot.VM_MULTI:
+                row += 1
+            else:
+                return self.plot()
+
+        if self.mainwindow.cb_trace_ax_acc_vel_filtered.isChecked():
+            trace_axis = TraceAxis(self, self.cfg['GRAPHTRACE']['label_axis_acc_vel_filtered'])
+            trace_axis.addPlot(row, 0)
+            trace_axis.set_pen(self.cfg['GRAPHTRACE']['color_axis_acc_vel_filtered'],
+                               self.cfg['GRAPHTRACE']['width_axis_acc_vel_filtered'], )
+            self.active_axis.append(trace_axis)
+            if self.viewmode == TracePlot.VM_MULTI:
+                row += 1
+            else:
+                return self.plot()
+
+        self.plot()
 
     def load_trace_csv(self, filename):
+        self.clear_trace()
         self.trace.load_trace_csv(filename=filename)
         self.plot_active = True
+        self.change_axis()
 
     def load_trace_acx(self, filename):
         self.trace.load_trace_acx(filename=filename)
         self.plot_active = True
+        self.change_axis()
 
     def autoRange(self):
-        if self.plot_active:
-            self.axis_01.axis.autoRange()
+        # if self.plot_active:
+        #    self.ax_.axis.autoRange()
+        pass
 
-    def set_viewmode(self, viewmode):
-        if self.plot_active and viewmode == TracePlot.VM_SINGLE:
-            self.plot_trace_single()
-        elif self.plot_active and viewmode == TracePlot.VM_MULTI:
-            self.plot_trace_multi()
-
-        self.viewmode = viewmode
+    def set_viewmode(self):
+        index = self.mainwindow.cb_trace_view.currentIndex()
+        if index == TracePlot.VM_MULTI:
+            self.viewmode = TracePlot.VM_MULTI
+        elif index == TracePlot.VM_SINGLE:
+            self.viewmode = TracePlot.VM_SINGLE
+        self.change_axis()
 
     def clear_trace(self):
         self.trace.clear()
         self.clear()
+        self.active_axis = []
         self.plot_active = False
 
-    def plot_trace_single(self):
-        pass
+    def plot(self):
+        first_ax = None
+        last_ax = None
+        for cnt, ax in enumerate(self.active_axis):
+            if self.viewmode == TracePlot.VM_MULTI:
+                if cnt == 0:
+                    first_ax = ax
+                elif cnt == len(self.active_axis) - 1:
+                    last_ax = ax
+                    first_ax.linkX(last_ax)
+                else:
+                    ax.linkX(first_ax)
+            elif self.viewmode == TracePlot.VM_SINGLE:
 
-    def plot_trace_multi(self):
-        self.clear()
-        self.axis_01.addPlot(1,0, self.cfg['GRAPHTRACE']['label_axis_velocity'])
-        self.axis_01.plot(self.trace.get_axis_time(), self.trace.get_axis_acc_from_speed(filtered=True))
+                if self.mainwindow.cb_trace_ax_way.isChecked():
+                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_way(),pen=pg.mkPen(
+                        color=ImageColor.getrgb(f'#{self.cfg["GRAPHTRACE"]["color_axis_way"]}'),
+                        width=self.cfg['GRAPHTRACE'].getint('width_axis_way')
+                    ))
 
-        self.axis_02.addPlot(2, 0, self.cfg['GRAPHTRACE']['label_axis_2'])
-        self.axis_02.plot(self.trace.get_axis_time(), self.trace.get_axis_2())
+                if self.mainwindow.cb_trace_ax_vel.isChecked():
+                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_velocity(),pen=pg.mkPen(
+                        color=ImageColor.getrgb(f'#{self.cfg["GRAPHTRACE"]["color_axis_velocity"]}'),
+                        width=self.cfg['GRAPHTRACE'].getint('width_axis_velocity')
+                    ))
 
-        self.axis_03.addPlot(3, 0, self.cfg['GRAPHTRACE']['label_axis_voltage'])
-        self.axis_03.plot(self.trace.get_axis_time(), self.trace.get_axis_voltage())
+                if self.mainwindow.cb_trace_ax_voltage.isChecked():
+                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_voltage(),pen=pg.mkPen(
+                        color=ImageColor.getrgb(f'#{self.cfg["GRAPHTRACE"]["color_axis_voltage"]}'),
+                        width=self.cfg['GRAPHTRACE'].getint('width_axis_voltage')
+                    ))
 
-        self.axis_04.addPlot(4, 0, self.cfg['GRAPHTRACE']['label_axis_acceleration'])
-        self.axis_04.plot(self.trace.get_axis_time(), self.trace.get_axis_velocity())
+                if self.mainwindow.cb_trace_ax_acc_way.isChecked():
+                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acceleration(),pen=pg.mkPen(
+                        color=ImageColor.getrgb(f'#{self.cfg["GRAPHTRACE"]["color_axis_acc_way"]}'),
+                        width=self.cfg['GRAPHTRACE'].getint('width_axis_acc_way')
+                    ))
 
-        self.axis_01.linkY(self.axis_04)
-        self.axis_02.linkY(self.axis_01)
-        self.axis_03.linkY(self.axis_01)
-        self.axis_04.linkY(self.axis_01)
+                if self.mainwindow.cb_trace_ax_acc_vel.isChecked():
+                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acc_from_speed(),pen=pg.mkPen(
+                        color=ImageColor.getrgb(f'#{self.cfg["GRAPHTRACE"]["color_axis_acc_vel"]}'),
+                        width=self.cfg['GRAPHTRACE'].getint('width_axis_acc_vel')
+                    ))
 
+                if self.mainwindow.cb_trace_ax_acc_vel_filtered.isChecked():
+                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acc_from_speed(filtered=True),pen=pg.mkPen(
+                        color=ImageColor.getrgb(f'#{self.cfg["GRAPHTRACE"]["color_axis_acc_vel_filtered"]}'),
+                        width=self.cfg['GRAPHTRACE'].getint('width_axis_acc_vel_filtered')
+                    ))
+
+            if ax.name == self.cfg['GRAPHTRACE']['label_axis_way']:
+                ax.plot(self.trace.get_axis_time(), self.trace.get_axis_way())
+
+            elif ax.name == self.cfg['GRAPHTRACE']['label_axis_velocity']:
+                ax.plot(self.trace.get_axis_time(), self.trace.get_axis_velocity())
+
+            elif ax.name == self.cfg['GRAPHTRACE']['label_axis_voltage']:
+                ax.plot(self.trace.get_axis_time(), self.trace.get_axis_voltage())
+
+            elif ax.name == self.cfg['GRAPHTRACE']['label_axis_acc_way']:
+                ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acceleration())
+
+            elif ax.name == self.cfg['GRAPHTRACE']['label_axis_acc_vel']:
+                ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acc_from_speed())
+
+            elif ax.name == self.cfg['GRAPHTRACE']['label_axis_acc_vel_filtered']:
+                ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acc_from_speed(filtered=True))
+
+        self.mainwindow.tabWidget.setCurrentIndex(1)
         self.autoRange()
 
 
-
 class Graph(pg.PlotWidget):
-    def __init__(self, cfg):
+    def __init__(self, cfg, mainwindow):
         self.cfg = cfg
+        self.mainwindow = mainwindow
 
         super(Graph, self).__init__(enableMenu=self.cfg['GRAPH'].getboolean('enable_menu'))
         self.edit_mode = False
@@ -113,24 +262,10 @@ class Graph(pg.PlotWidget):
         self.addLegend()
         self.pen_legend = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPH']['color_legend']),
                                    width=self.cfg['GRAPH'].getint('width_legend'))
-        self.pen_trace_velocity = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPHTRACE']['color_axis_velocity']),
-                                           width=self.cfg['GRAPHTRACE'].getint('width_axis_velocity'))
-        self.pen_trace_2 = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPHTRACE']['color_axis_2']),
-                                    width=self.cfg['GRAPHTRACE'].getint('width_axis_2'))
-        self.pen_trace_voltage = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPHTRACE']['color_axis_voltage']),
-                                          width=self.cfg['GRAPHTRACE'].getint('width_axis_voltage'))
-        self.pen_trace_acceleration = pg.mkPen(
-            color=ImageColor.getrgb('#' + self.cfg['GRAPHTRACE']['color_axis_acceleration']),
-            width=self.cfg['GRAPHTRACE'].getint('width_axis_acceleration'))
         self.setBackground(self.cfg['GRAPH']['background_color'])
         self.cursor = Cursor(self)
         self.proxy = pg.SignalProxy(self.scene().sigMouseMoved, rateLimit=60, slot=self.mouseMoved)
         self.proxy1 = pg.SignalProxy(self.scene().sigMouseClicked, rateLimit=60, slot=self.mouseClicked)
-        self.plotitem_trace_acc = None
-        self.plotitem_trace_2 = None
-        self.plotitem_trace_vel = None
-        self.plotitem_trace_vol = None
-
 
     def mouseClicked(self, evt):
         clickEvent = evt[0]
@@ -140,13 +275,13 @@ class Graph(pg.PlotWidget):
                 self.drag_start_pos = self.getViewBox().mapSceneToView(clickEvent.pos())
             else:
                 self.drag_end_pos = self.getViewBox().mapSceneToView(clickEvent.pos())
-                print('End:',self.drag_end_pos)
+                print('End:', self.drag_end_pos)
 
     def mouseMoved(self, evt):
         pos = evt[0]  ## using signal proxy turns original arguments into a tuple
         if self.dragging:
             self.current_drag_pos = self.getViewBox().mapSceneToView(pos)
-            print('Start:',self.drag_start_pos)
+            print('Start:', self.drag_start_pos)
             print('Current', self.current_drag_pos)
 
         if self.cursor.active:
@@ -169,23 +304,3 @@ class Graph(pg.PlotWidget):
 
     def setYLabel(self, text):
         self.setLabel('left', text, color=self.cfg['GRAPH']['color_ylabel'])
-
-    def plot_trace(self, trace):
-        self.clear()
-
-        self.plotitem_trace_acc = self.plot(trace.get_axis_time(), trace.get_axis_acc_from_speed(filtered=True),
-                                            pen=self.pen_trace_acceleration,
-                                            name=self.cfg['GRAPHTRACE']['label_axis_acceleration'])
-
-        self.plotitem_trace_vel = self.plot(trace.get_axis_time(), trace.get_axis_velocity(),
-                                            pen=self.pen_trace_velocity,
-                                            name=self.cfg['GRAPHTRACE']['label_axis_velocity'])
-
-        self.plotitem_trace_vol = self.plot(trace.get_axis_time(), trace.get_axis_voltage(), pen=self.pen_trace_voltage,
-                                            name=self.cfg['GRAPHTRACE']['label_axis_voltage'])
-
-        self.plotitem_trace_2 = self.plot(trace.get_axis_time(), trace.get_axis_2(), pen=self.pen_trace_2,
-                                          name=self.cfg['GRAPHTRACE']['label_axis_2'])
-
-        self.setXLabel(self.cfg['GRAPH']['name_trace_ax_x'])
-        self.setYLabel(self.cfg['GRAPH']['name_trace_ax_y'])
