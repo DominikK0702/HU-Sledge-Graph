@@ -63,6 +63,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         if self.cfg['GUI'].getboolean('fullscreen'): self.showFullScreen()
 
     def connect_componets(self):
+        # Buttons
         self.btn_load.clicked.connect(self.handle_btn_load)
         self.btn_save.clicked.connect(self.handle_btn_save)
         self.btn_compare.clicked.connect(self.handle_btn_compare)
@@ -74,6 +75,11 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_trace_save.clicked.connect(self.handle_btn_trace_save)
         self.btn_trace_clear.clicked.connect(self.handle_btn_trace_clear)
         self.btn_autorange.clicked.connect(self.trace_plot.autoRange)
+        # Tabs
+        self.tabWidget.currentChanged.connect(self.sync_tabs)
+
+    def sync_tabs(self):
+        self.tabWidgetTools.setCurrentIndex(self.tabWidget.currentIndex())
 
     def handle_btn_load(self):
         options = QFileDialog.Options()
