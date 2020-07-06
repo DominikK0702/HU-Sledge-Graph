@@ -290,7 +290,7 @@ class BezierCurve(pg.PolyLineROI):
         data = []
         any = False
         for cnt,i in enumerate(self.handles):
-            if len(dir(i['pos'])) == 50:
+            if i['pos'].__repr__().find('PyQt5.QtCore.QPointF') >= 0:
                 any = True
                 y = i['pos'].y()
                 self.drawer.mainwindow.current_data_y[self.index - 10 + cnt] = y
