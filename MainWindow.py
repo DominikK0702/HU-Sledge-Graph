@@ -18,18 +18,24 @@ class Ui_MainWindow(object):
         MainWindow.setMinimumSize(QtCore.QSize(800, 600))
         MainWindow.setStyleSheet("QPushButton {\n"
 "  background-color: #d9ddff;\n"
+"  background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, \n"
+"  stop:0 rgba(150, 160, 255, 0.8), \n"
+"  stop:1 rgba(105, 121, 255,0.8));\n"
+"\n"
 "  border: 1px solid #32414B;\n"
-"  border-radius: 5px;\n"
-"  padding: 3px;\n"
+"  border-radius: 6px;\n"
+"  padding: 4px;\n"
 "  color: #000000\n"
 "}\n"
 "\n"
 "\n"
 "QPushButton:pressed {\n"
+"\n"
 "  background-color: #6270f5;\n"
 "}\n"
 "\n"
 "QPushButton:pressed:hover {\n"
+"  border: 1px solid rgba(105,182,255,255);\n"
 "   background-color: #6270f5;\n"
 "}\n"
 "\n"
@@ -58,6 +64,9 @@ class Ui_MainWindow(object):
 "\n"
 "QComboBox {\n"
 "  background-color: #d9ddff;\n"
+"  background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, \n"
+"  stop:0 rgba(150, 160, 255, 255), \n"
+"  stop:1 rgba(105, 121, 255,255));\n"
 "  border: 1px solid #32414B;\n"
 "  border-radius: 5px;\n"
 "  selection-background-color: #1464A0;\n"
@@ -86,7 +95,8 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.headWidget.sizePolicy().hasHeightForWidth())
         self.headWidget.setSizePolicy(sizePolicy)
-        self.headWidget.setMinimumSize(QtCore.QSize(0, 150))
+        self.headWidget.setMinimumSize(QtCore.QSize(0, 175))
+        self.headWidget.setMaximumSize(QtCore.QSize(16777215, 175))
         self.headWidget.setObjectName("headWidget")
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.headWidget)
         self.horizontalLayout.setContentsMargins(0, 2, 0, 2)
@@ -102,6 +112,7 @@ class Ui_MainWindow(object):
         self.logo = QtWidgets.QLabel(self.headWidget)
         self.logo.setText("")
         self.logo.setAlignment(QtCore.Qt.AlignCenter)
+        self.logo.setOpenExternalLinks(False)
         self.logo.setObjectName("logo")
         self.logoLayout.addWidget(self.logo)
         self.headLayout.addLayout(self.logoLayout)
@@ -109,12 +120,14 @@ class Ui_MainWindow(object):
         self.headLayout.addItem(spacerItem)
         self.tabWidgetTools = QtWidgets.QTabWidget(self.headWidget)
         font = QtGui.QFont()
-        font.setPointSize(10)
+        font.setPointSize(8)
+        font.setBold(False)
+        font.setWeight(50)
         self.tabWidgetTools.setFont(font)
         self.tabWidgetTools.setTabPosition(QtWidgets.QTabWidget.East)
         self.tabWidgetTools.setTabShape(QtWidgets.QTabWidget.Rounded)
         self.tabWidgetTools.setElideMode(QtCore.Qt.ElideNone)
-        self.tabWidgetTools.setUsesScrollButtons(True)
+        self.tabWidgetTools.setUsesScrollButtons(False)
         self.tabWidgetTools.setDocumentMode(False)
         self.tabWidgetTools.setTabsClosable(False)
         self.tabWidgetTools.setMovable(False)
@@ -313,6 +326,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_11 = QtWidgets.QHBoxLayout(self.groupBox_2)
         self.horizontalLayout_11.setObjectName("horizontalLayout_11")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_3.setContentsMargins(7, -1, 7, -1)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.cb_trace_view = QtWidgets.QComboBox(self.groupBox_2)
         font = QtGui.QFont()
@@ -322,12 +336,12 @@ class Ui_MainWindow(object):
         self.cb_trace_view.addItem("")
         self.cb_trace_view.addItem("")
         self.verticalLayout_3.addWidget(self.cb_trace_view)
-        self.btn_trace_clear = QtWidgets.QPushButton(self.groupBox_2)
+        self.btn_trace_autorange = QtWidgets.QPushButton(self.groupBox_2)
         font = QtGui.QFont()
         font.setPointSize(10)
-        self.btn_trace_clear.setFont(font)
-        self.btn_trace_clear.setObjectName("btn_trace_clear")
-        self.verticalLayout_3.addWidget(self.btn_trace_clear)
+        self.btn_trace_autorange.setFont(font)
+        self.btn_trace_autorange.setObjectName("btn_trace_autorange")
+        self.verticalLayout_3.addWidget(self.btn_trace_autorange)
         self.horizontalLayout_11.addLayout(self.verticalLayout_3)
         self.horizontalLayout_7.addWidget(self.groupBox_2)
         self.groupBox = QtWidgets.QGroupBox(self.tool_tab_trace)
@@ -345,42 +359,51 @@ class Ui_MainWindow(object):
         font = QtGui.QFont()
         font.setPointSize(10)
         self.cb_trace_ax_acc_vel.setFont(font)
+        self.cb_trace_ax_acc_vel.setChecked(False)
         self.cb_trace_ax_acc_vel.setObjectName("cb_trace_ax_acc_vel")
         self.gridLayout.addWidget(self.cb_trace_ax_acc_vel, 1, 1, 1, 1)
         self.cb_trace_ax_voltage = QtWidgets.QCheckBox(self.groupBox)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.cb_trace_ax_voltage.setFont(font)
+        self.cb_trace_ax_voltage.setChecked(True)
         self.cb_trace_ax_voltage.setObjectName("cb_trace_ax_voltage")
         self.gridLayout.addWidget(self.cb_trace_ax_voltage, 2, 0, 1, 1)
         self.cb_trace_ax_way = QtWidgets.QCheckBox(self.groupBox)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.cb_trace_ax_way.setFont(font)
+        self.cb_trace_ax_way.setChecked(True)
         self.cb_trace_ax_way.setObjectName("cb_trace_ax_way")
         self.gridLayout.addWidget(self.cb_trace_ax_way, 0, 0, 1, 1)
         self.cb_trace_ax_vel = QtWidgets.QCheckBox(self.groupBox)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.cb_trace_ax_vel.setFont(font)
+        self.cb_trace_ax_vel.setChecked(True)
         self.cb_trace_ax_vel.setObjectName("cb_trace_ax_vel")
         self.gridLayout.addWidget(self.cb_trace_ax_vel, 1, 0, 1, 1)
         self.cb_trace_ax_acc_way = QtWidgets.QCheckBox(self.groupBox)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.cb_trace_ax_acc_way.setFont(font)
+        self.cb_trace_ax_acc_way.setChecked(False)
         self.cb_trace_ax_acc_way.setObjectName("cb_trace_ax_acc_way")
         self.gridLayout.addWidget(self.cb_trace_ax_acc_way, 0, 1, 1, 1)
         self.cb_trace_ax_acc_vel_filtered = QtWidgets.QCheckBox(self.groupBox)
         font = QtGui.QFont()
         font.setPointSize(10)
         self.cb_trace_ax_acc_vel_filtered.setFont(font)
+        self.cb_trace_ax_acc_vel_filtered.setChecked(True)
         self.cb_trace_ax_acc_vel_filtered.setObjectName("cb_trace_ax_acc_vel_filtered")
         self.gridLayout.addWidget(self.cb_trace_ax_acc_vel_filtered, 2, 1, 1, 1)
         self.gridLayout_2.addLayout(self.gridLayout, 0, 1, 1, 1)
         self.horizontalLayout_7.addWidget(self.groupBox)
         self.horizontalLayout_8.addLayout(self.horizontalLayout_7)
         self.tabWidgetTools.addTab(self.tool_tab_trace, "")
+        self.tool_tab_parameter = QtWidgets.QWidget()
+        self.tool_tab_parameter.setObjectName("tool_tab_parameter")
+        self.tabWidgetTools.addTab(self.tool_tab_parameter, "")
         self.headLayout.addWidget(self.tabWidgetTools)
         self.horizontalLayout.addLayout(self.headLayout)
         self.verticalLayout_2.addWidget(self.headWidget)
@@ -398,6 +421,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.pulse)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.tab_layout_pulse = QtWidgets.QVBoxLayout()
+        self.tab_layout_pulse.setSpacing(0)
         self.tab_layout_pulse.setObjectName("tab_layout_pulse")
         self.verticalLayout_4.addLayout(self.tab_layout_pulse)
         self.tabWidget.addTab(self.pulse, "")
@@ -422,6 +446,8 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.parameter, "")
         self.verticalLayout.addWidget(self.tabWidget)
         self.verticalLayout_2.addLayout(self.verticalLayout)
+        self.verticalLayout_2.setStretch(0, 1)
+        self.verticalLayout_2.setStretch(1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1517, 18))
@@ -441,6 +467,8 @@ class Ui_MainWindow(object):
         self.tabWidgetTools.setCurrentIndex(0)
         self.tabWidget.setCurrentIndex(0)
         self.actionExit.triggered['bool'].connect(MainWindow.close)
+        self.tabWidgetTools.currentChanged['int'].connect(self.tabWidget.setCurrentIndex)
+        self.tabWidget.currentChanged['int'].connect(self.tabWidgetTools.setCurrentIndex)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -458,7 +486,7 @@ class Ui_MainWindow(object):
         self.btn_tool_edit.setText(_translate("MainWindow", "Bearbeiten"))
         self.groupBox_PLC.setTitle(_translate("MainWindow", "Puls Übertragen"))
         self.btn_submit_plc.setText(_translate("MainWindow", "Lade Puls in PLC"))
-        self.btn_autorange.setText(_translate("MainWindow", "AutoRange"))
+        self.btn_autorange.setText(_translate("MainWindow", "Auto Range"))
         self.tabWidgetTools.setTabText(self.tabWidgetTools.indexOf(self.tool_tab_puls), _translate("MainWindow", "Puls"))
         self.groupBox_Trace.setTitle(_translate("MainWindow", "Trace laden/speichern"))
         self.btn_trace_loadfile.setText(_translate("MainWindow", "Laden aus Datei"))
@@ -467,7 +495,7 @@ class Ui_MainWindow(object):
         self.groupBox_2.setTitle(_translate("MainWindow", "Ansicht"))
         self.cb_trace_view.setItemText(0, _translate("MainWindow", "Untereinander"))
         self.cb_trace_view.setItemText(1, _translate("MainWindow", "Überlappend"))
-        self.btn_trace_clear.setText(_translate("MainWindow", "Ausblenden"))
+        self.btn_trace_autorange.setText(_translate("MainWindow", "Auto Range"))
         self.groupBox.setTitle(_translate("MainWindow", "Aktive Achsen"))
         self.cb_trace_ax_acc_vel.setText(_translate("MainWindow", "Bechleunigung aus Geschwindigkeit"))
         self.cb_trace_ax_voltage.setText(_translate("MainWindow", "Spannung"))
@@ -476,6 +504,7 @@ class Ui_MainWindow(object):
         self.cb_trace_ax_acc_way.setText(_translate("MainWindow", "Bechleunigung aus Weg"))
         self.cb_trace_ax_acc_vel_filtered.setText(_translate("MainWindow", "Bechleunigung aus Geschw. gefiltert"))
         self.tabWidgetTools.setTabText(self.tabWidgetTools.indexOf(self.tool_tab_trace), _translate("MainWindow", "Trace"))
+        self.tabWidgetTools.setTabText(self.tabWidgetTools.indexOf(self.tool_tab_parameter), _translate("MainWindow", "Parameter"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.pulse), _translate("MainWindow", "Puls"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.trace), _translate("MainWindow", "Trace"))
         self.pushButton.setText(_translate("MainWindow", "Parameter Bin Laden"))

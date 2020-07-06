@@ -1,13 +1,36 @@
 import pyqtgraph as pg
+from scipy import spatial
 from Cursor import Cursor
 from TraceHelper import Trace
 from PIL import ImageColor
+from bisect import bisect_left
+
+
+def take_closest(myList, myNumber):
+    """
+    Assumes myList is sorted. Returns closest value to myNumber.
+
+    If two numbers are equally close, return the smallest number.
+    """
+    pos = bisect_left(myList, myNumber)
+    return pos
+    if pos == 0:
+        return myList[0]
+    if pos == len(myList):
+        return myList[-1]
+    before = myList[pos - 1]
+    after = myList[pos]
+    if after - myNumber < myNumber - before:
+        return after
+    else:
+        return before
 
 
 class TraceAxis:
     def __init__(self, traceplot, axisname):
         self.trace_plot = traceplot
         self.name = axisname
+
         self.enabled = False
         self.axis = None
         self.pen = None
@@ -17,6 +40,7 @@ class TraceAxis:
 
     def addPlot(self, row, col):
         self.axis = self.trace_plot.addPlot(row=row, col=col, title=self.name)
+        self.axis.showGrid(x=True, y=True)
 
     def remove(self):
         self.trace_plot.removeItem(self.axis)
@@ -60,6 +84,13 @@ class TracePlot(pg.GraphicsLayoutWidget):
         self.mainwindow.cb_trace_ax_acc_vel.clicked.connect(self.change_axis)
         self.mainwindow.cb_trace_ax_acc_vel_filtered.clicked.connect(self.change_axis)
         self.mainwindow.cb_trace_view.currentIndexChanged.connect(self.set_viewmode)
+
+        self.mainwindow.btn_trace_autorange.clicked.connect(self.autorange)
+
+    def autorange(self):
+        for ax in self.active_axis:
+            ax.axis.autoRange()
+            break
 
     def change_axis(self):
         if not self.plot_active:
@@ -184,37 +215,37 @@ class TracePlot(pg.GraphicsLayoutWidget):
             elif self.viewmode == TracePlot.VM_SINGLE:
 
                 if self.mainwindow.cb_trace_ax_way.isChecked():
-                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_way(),pen=pg.mkPen(
+                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_way(), pen=pg.mkPen(
                         color=ImageColor.getrgb(f'#{self.cfg["GRAPHTRACE"]["color_axis_way"]}'),
                         width=self.cfg['GRAPHTRACE'].getint('width_axis_way')
                     ))
 
                 if self.mainwindow.cb_trace_ax_vel.isChecked():
-                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_velocity(),pen=pg.mkPen(
+                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_velocity(), pen=pg.mkPen(
                         color=ImageColor.getrgb(f'#{self.cfg["GRAPHTRACE"]["color_axis_velocity"]}'),
                         width=self.cfg['GRAPHTRACE'].getint('width_axis_velocity')
                     ))
 
                 if self.mainwindow.cb_trace_ax_voltage.isChecked():
-                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_voltage(),pen=pg.mkPen(
+                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_voltage(), pen=pg.mkPen(
                         color=ImageColor.getrgb(f'#{self.cfg["GRAPHTRACE"]["color_axis_voltage"]}'),
                         width=self.cfg['GRAPHTRACE'].getint('width_axis_voltage')
                     ))
 
                 if self.mainwindow.cb_trace_ax_acc_way.isChecked():
-                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acceleration(),pen=pg.mkPen(
+                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acceleration(), pen=pg.mkPen(
                         color=ImageColor.getrgb(f'#{self.cfg["GRAPHTRACE"]["color_axis_acc_way"]}'),
                         width=self.cfg['GRAPHTRACE'].getint('width_axis_acc_way')
                     ))
 
                 if self.mainwindow.cb_trace_ax_acc_vel.isChecked():
-                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acc_from_speed(),pen=pg.mkPen(
+                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acc_from_speed(), pen=pg.mkPen(
                         color=ImageColor.getrgb(f'#{self.cfg["GRAPHTRACE"]["color_axis_acc_vel"]}'),
                         width=self.cfg['GRAPHTRACE'].getint('width_axis_acc_vel')
                     ))
 
                 if self.mainwindow.cb_trace_ax_acc_vel_filtered.isChecked():
-                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acc_from_speed(filtered=True),pen=pg.mkPen(
+                    ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acc_from_speed(filtered=True), pen=pg.mkPen(
                         color=ImageColor.getrgb(f'#{self.cfg["GRAPHTRACE"]["color_axis_acc_vel_filtered"]}'),
                         width=self.cfg['GRAPHTRACE'].getint('width_axis_acc_vel_filtered')
                     ))
@@ -241,17 +272,53 @@ class TracePlot(pg.GraphicsLayoutWidget):
         self.autoRange()
 
 
+class BezierCurve(pg.PolyLineROI):
+
+    def __init__(self, drawer):
+        self.index = None
+        self.points = None
+        self.drawer = drawer
+        self.line_pen = pg.mkPen(color=(0, 0, 0, 255), width=2)
+        pg.PolyLineROI.__init__(self, [])
+        self.handlePen.setColor(pg.QtGui.QColor(0, 0, 0))
+        self.pen.setColor(pg.QtGui.QColor(0, 0, 0))
+
+        self.sigRegionChanged.connect(self.ev)
+        self.sigRegionChangeFinished.connect(self.finished)
+
+    def finished(self):
+        data = []
+        any = False
+        for cnt,i in enumerate(self.handles):
+            if len(dir(i['pos'])) == 50:
+                any = True
+                y = i['pos'].y()
+                self.drawer.mainwindow.current_data_y[self.index - 10 + cnt] = y
+        if any:
+            self.drawer.plot(self.drawer.mainwindow.current_data_x, self.drawer.mainwindow.current_data_y, clear=True, pen=self.drawer.mainwindow.pen_current, name=self.drawer.cfg['STRINGS']['graph_current_label'])
+            self.drawer.getPlotItem().legend.setPen(self.drawer.pen_legend)
+        print(1)
+
+    def setDataPoints(self, data, index):
+        self.index = index
+        self.points = list(data)
+        self.setPoints(data, closed=False)
+
+    def ev(self):
+       pass
+
+
 class Graph(pg.PlotWidget):
     def __init__(self, cfg, mainwindow):
         self.cfg = cfg
         self.mainwindow = mainwindow
 
         super(Graph, self).__init__(enableMenu=self.cfg['GRAPH'].getboolean('enable_menu'))
+
         self.edit_mode = False
         self.dragging = False
-        self.current_drag_pos = None
-        self.drag_start_pos = None
-        self.drag_end_pos = None
+        self.current_mouse_pos = None
+        self.bez = None
         self.setMouseEnabled(x=self.cfg['GRAPH'].getboolean('mouseenable_x'),
                              y=self.cfg['GRAPH'].getboolean('mouseenable_x'))
         self.enableAutoRange(x=self.cfg['GRAPH'].getboolean('autorange_x'),
@@ -270,19 +337,23 @@ class Graph(pg.PlotWidget):
     def mouseClicked(self, evt):
         clickEvent = evt[0]
         if self.edit_mode and clickEvent.button() == pg.QtCore.Qt.LeftButton:
-            self.dragging = not self.dragging
-            if self.dragging:
-                self.drag_start_pos = self.getViewBox().mapSceneToView(clickEvent.pos())
-            else:
-                self.drag_end_pos = self.getViewBox().mapSceneToView(clickEvent.pos())
-                print('End:', self.drag_end_pos)
+            pos = self.getViewBox().mapSceneToView(self.current_mouse_pos)
+            d = []
+            for e, i in enumerate(self.mainwindow.current_data_x):
+                d.append([i, self.mainwindow.current_data_y[e]])
+
+            nearest_index = take_closest(self.mainwindow.current_data_x, pos.x())
+            range = d[nearest_index - 10:nearest_index + 10]
+
+            if self.bez:
+                self.removeItem(self.bez)
+            self.bez = BezierCurve(self)
+            self.bez.setDataPoints(range, nearest_index)
+            self.addItem(self.bez)
 
     def mouseMoved(self, evt):
         pos = evt[0]  ## using signal proxy turns original arguments into a tuple
-        if self.dragging:
-            self.current_drag_pos = self.getViewBox().mapSceneToView(pos)
-            print('Start:', self.drag_start_pos)
-            print('Current', self.current_drag_pos)
+        self.current_mouse_pos = pos
 
         if self.cursor.active:
             if self.sceneBoundingRect().contains(pos):
@@ -292,11 +363,15 @@ class Graph(pg.PlotWidget):
 
     def toggle_edit_mode(self, state):
         if state:
-            self.setMouseEnabled(x=False, y=False)
+            #if not self.bez:
+                #self.bez = BezierCurve(self)
+                #self.addItem(self.bez)
+            #else:
+            #    self.removeItem(self.bez)
+            #    self.bez = BezierCurve(self)
+            #    self.addItem(self.bez)
             self.edit_mode = True
         else:
-            self.setMouseEnabled(x=self.cfg['GRAPH'].getboolean('mouseenable_x'),
-                                 y=self.cfg['GRAPH'].getboolean('mouseenable_x'))
             self.edit_mode = False
 
     def setXLabel(self, text):

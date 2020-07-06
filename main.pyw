@@ -73,13 +73,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_trace_loadfile.clicked.connect(self.handle_btn_trace_loadfile)
         self.btn_trace_loadlast.clicked.connect(self.handle_btn_trace_loadlast)
         self.btn_trace_save.clicked.connect(self.handle_btn_trace_save)
-        self.btn_trace_clear.clicked.connect(self.handle_btn_trace_clear)
         self.btn_autorange.clicked.connect(self.trace_plot.autoRange)
-        # Tabs
-        self.tabWidget.currentChanged.connect(self.sync_tabs)
-
-    def sync_tabs(self):
-        self.tabWidgetTools.setCurrentIndex(self.tabWidget.currentIndex())
 
     def handle_btn_load(self):
         options = QFileDialog.Options()
@@ -101,9 +95,13 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.btn_tool_cursor.setChecked(False)
             self.graph.cursor.enabled(False)
             self.graph.clear()
+
+
             self.graph.plot(self.current_data_x, self.current_data_y, pen=self.pen_current,
                             name=self.cfg['STRINGS']['graph_current_label'])
             self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
+
+
             self.graph.enableAutoRange(x=True, y=True)
             self.tabWidget.setCurrentIndex(0)
             self.graph.setTitle(self.cfg['STRINGS']['graph_title_current'])
@@ -191,7 +189,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         if not self.cfg['GUI'].getboolean('use_native_filedialog'):
             options |= QFileDialog.DontUseNativeDialog
         fileName, fileType = QFileDialog.getOpenFileName(self, self.cfg['STRINGS']['trace_load_title'], "",
-                                                         "Trace ACX (*.ACX.GZ);;Trace CSV (*.csv)",
+                                                         "Trace CSV (*.csv);;Trace ACX (*.ACX.GZ)",
                                                          options=options)
         if fileName and fileType == 'Trace ACX (*.ACX.GZ)':
             self.trace_plot.load_trace_acx(fileName)
@@ -206,13 +204,6 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_last_loaded'])
         except Exception as e:
             self.statusbar.showMessage(str(e))
-
-    def handle_btn_trace_clear(self):
-        self.current_trace.clear()
-        self.graph.clear()
-        self.graph.setXLabel('')
-        self.graph.setYLabel('')
-        self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_cleared'])
 
     def handle_btn_trace_save(self):
         if self.current_trace.datapoints <= 0:

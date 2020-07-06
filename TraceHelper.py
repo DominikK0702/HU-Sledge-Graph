@@ -7,7 +7,7 @@ def diff(array, td):
     result = []
     last = 0
     for i in array:
-        result.append(((i - last) / (td / 1000)))
+        result.append(((i - last) / (td / 1)))
         last = i
     return result
 
@@ -75,10 +75,10 @@ class Trace:
                     header = False
                     continue
                 self.axis_x.append(float(row[0].replace(',', '.')) / 1000)  # Conver from ms to s
-                self.axis_velocity.append(float(row[1].replace(',', '.')) / 1000)
-                self.axis_way.append(float(row[2].replace(',', '.')) * 0.005)
-                self.axis_voltage.append((float(row[3].replace(',', '.')) * 25) - 12000)
-                self.axis_acceleration.append(float(row[4].replace(',', '.')))
+                self.axis_velocity.append(float(row[1].replace(',', '.')))
+                self.axis_way.append(float(row[2].replace(',', '.'))/1000)
+                self.axis_voltage.append((float(row[3].replace(',', '.'))))
+                self.axis_acceleration.append(float(row[4].replace(',', '.'))/60)
         self.datapoints = len(self.axis_x)
 
     def get_axis_time(self):
@@ -98,6 +98,6 @@ class Trace:
 
     def get_axis_acc_from_speed(self, filtered=False):
         if filtered:
-            return savgol_filter(diff(self.axis_velocity, (self.axis_x[2] - self.axis_x[1])), 51, 3)
+            return [i/60 for i in savgol_filter(diff(self.axis_velocity, (self.axis_x[2] - self.axis_x[1])), 51, 3)]
         else:
             return diff(self.axis_velocity, (self.axis_x[2] - self.axis_x[1]))
