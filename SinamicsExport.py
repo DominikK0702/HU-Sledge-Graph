@@ -43,9 +43,9 @@ def get_last_trace(ip, csvfilepath, user='SINAMICS', passw=''):
                            cookies=cookies)
         if res.status_code == 200:
 
-            ts = max([int(i[0]) for i in res.json()])
+            ts = max([int(i[1]) for i in res.json()])
 
-            tracefile = [i[0] for i in res.json() if int(i[1]) == ts]
+            tracefile = [i[0] for i in res.json() if int(i[1]) == ts].pop()
             headers = {
                 'Upgrade-Insecure-Requests': '1',
                 'User-Agent'               : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
