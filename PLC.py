@@ -1,11 +1,31 @@
 from PyQt5 import QtCore
 import matplotlib.pyplot as plt
-import csv
 from scipy.signal import savgol_filter
 from SinamicsExport import get_last_trace
 from PyLcSnap7.PLC import S7Conn
 from PyLcSnap7 import Smarttags
 from TraceHelper import Trace, offset_x_soll
+
+
+class UDT_Trigger:
+    def __init__(self, plc, db, start):
+        self._plc = plc
+        self._db = db
+        self._start = start
+        self.enabled = Smarttags.Bool(self._plc, self._db, self._start, 0)
+        self.name = Smarttags.String(self._plc, self._db, self._start + 2, 16)
+        self.time = Smarttags.Int(self._plc, self._db, self._start + 20)
+
+
+class GDB_Versuchsdaten:
+    def __init__(self, plc, cfg):
+        self.plc = plc
+        self.cfg = cfg
+        self.versuchsnummer = Smarttags.String(self.plc, 894, 0, 64)
+        self.versuchstyp = Smarttags.String(self.plc, 894, 66, 64)
+        self.bediener = Smarttags.String(self.plc, 894, 132, 64)
+        self.kommentar = Smarttags.String(self.plc, 894, 198, 64)
+        self.trigger01 = UDT_Trigger(self.plc, 894, 264)
 
 
 class PLC(QtCore.QThread):
@@ -14,6 +34,9 @@ class PLC(QtCore.QThread):
         self.parent = parent
         self.cfg = parent.cfg
         self.plc = S7Conn(self.cfg['PLC']['ip'])
+        x = self.plc.readLTime(894,284)
+        self.plc.writeLTime(894,284,x.microseconds)
+        self.gdb_versuchsdaten = GDB_Versuchsdaten(self.plc, self.cfg)
         self.keep_alive = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_in'), 0, 0)
         self.regler_date_ready = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_out'), 0, 0)
         self.array_ist = Smarttags.RealArray(self.plc, self.cfg['PLC'].getint('db_ist'), 0, 3000)
@@ -93,7 +116,7 @@ class PLC(QtCore.QThread):
         trace.load_trace_csv(filename)
         khz = self.cfg['GRAPH'].getint('resolution_khz')
 
-        #soll_data = [i * 60 * 0.981 for i in self.array_soll.read()]
+        # soll_data = [i * 60 * 0.981 for i in self.array_soll.read()]
         # todo test calc to m/s²
         soll_data = [i * 0.981 for i in self.array_soll.read()]
 

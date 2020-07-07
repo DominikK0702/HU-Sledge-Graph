@@ -112,6 +112,32 @@ class S7Conn:
         else:
             return self.writeString(db, start, value)
 
+    def readLTime(self, db, start):
+        if self.connect():
+            reading = self.client.read_area(snap7.snap7types.S7AreaDB, db, start, 8)
+            import struct, numpy, datetime
+            value = struct.unpack('>q', struct.pack('8B', *reading))[0]
+            td = numpy.timedelta64(value, 'ns')
+            ltime = datetime.timedelta(microseconds=td.tolist()/1e3)
+            return ltime
+        else:
+            return self.readLint(db, start)
+
+    def writeLTime(self, db, start, microseconds):
+        # todo LTIMEEEEEE
+        if self.connect():
+            reading = self.client.read_area(snap7.snap7types.S7AreaDB, db, start, 8)
+            import struct, numpy, datetime
+            value = struct.unpack('>q', struct.pack('8B', *reading))[0]
+
+            real = float(real)
+            real = struct.pack('>f', real)
+            _bytes = struct.unpack('4B', real)
+            for i, b in enumerate(_bytes):
+                _bytearray[byte_index + i] = b
+        else:
+            return self.readLint(db, start)
+
     def disconnect(self):
         self.client.disconnect()
 
