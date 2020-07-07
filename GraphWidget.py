@@ -45,12 +45,11 @@ class EditCurve(pg.PolyLineROI):
             if i['pos'].__repr__().find('PyQt5.QtCore.QPointF') >= 0:
                 any = True
                 y = i['pos'].y()
-                self.drawer.mainwindow.current_data_y[self.index - (self.points_count//2) + cnt] = y
+                self.drawer.mainwindow.current_data_y[self.index - (self.points_count // 2) + cnt] = y
         if any:
             if self.linked:
                 for cnt, i in enumerate(self.handles):
-                        self.drawer.mainwindow.current_data_y[self.index - (self.points_count // 2) + cnt] = y
-
+                    self.drawer.mainwindow.current_data_y[self.index - (self.points_count // 2) + cnt] = y
 
             self.drawer.plot(self.drawer.mainwindow.current_data_x, self.drawer.mainwindow.current_data_y, clear=True,
                              pen=self.drawer.mainwindow.pen_current,
@@ -63,11 +62,11 @@ class EditCurve(pg.PolyLineROI):
         for cnt, i in enumerate(datax):
             self.data.append([i, datay[cnt]])
         self.index = take_closest(datax, pos.x())
-        self.points = self.data[self.index - self.points_count//2:self.index + (self.points_count//2)+1]
+        self.points = self.data[self.index - self.points_count // 2:self.index + (self.points_count // 2) + 1]
         self.setPoints(self.points, closed=False)
         for i in self.getHandles():
             print(i)
-            #todo mhmhmh
+            # todo mhmhmh
 
 
 class Graph(pg.PlotWidget):
@@ -106,6 +105,9 @@ class Graph(pg.PlotWidget):
         # todo Untereinander Überlappend
         print(1)
 
+    def auto_range(self):
+        self.autoRange()
+
     def add_edit_rois(self):
         pos = self.getViewBox().mapSceneToView(self.current_mouse_pos)
         if self.bez:
@@ -122,7 +124,6 @@ class Graph(pg.PlotWidget):
             if len(self.mainwindow.current_data_x) <= 0:
                 return
             self.add_edit_rois()
-
 
     def mouseMoved(self, evt):
         pos = evt[0]
@@ -143,11 +144,30 @@ class Graph(pg.PlotWidget):
 
     def plot_compare(self, trace, data_soll):
         # Plot Soll
-        self.plot(trace.get_axis_time(),
-                  trace.get_axis_acc_from_speed(filtered=True),
-                  pen=self.pen_ist, name=self.cfg['STRINGS']['graph_ist_label'])
-        # Plot Ist
-        self.plot(offset_x_soll(data_soll, 0),
-                  data_soll,
+        offset_soll = 50
+        scaled_soll_data = [i * 0.981 for i in data_soll]
+        soll_x = [i * 1000 for i in offset_x_soll(data_soll, offset_soll)]
+        self.plot(soll_x,
+                  scaled_soll_data,
                   pen=self.pen_soll, name=self.cfg['STRINGS']['graph_soll_label'])
+
+
+        cut_trace = True
+        pulsdauer = soll_x[-1] + 50
+        ist_x = []
+        ist_y = []
+        if cut_trace:
+            ist_x = [i * 1000 for i in trace.get_axis_time() if i*1000 <= pulsdauer]
+            ist_y = [i/60 for i in trace.get_axis_acc_from_speed(filtered=True)[:len(ist_x)]]
+        else:
+            ist_x = [i * 1000 for i in trace.get_axis_time()]
+            ist_y = [i/60 for i in trace.get_axis_acc_from_speed(filtered=True)]
+        # Plot Ist
+        self.plot(ist_x, ist_y,
+                  pen=self.pen_ist, name=self.cfg['STRINGS']['graph_ist_label'])
+
+
+        self.auto_range()
+        self.setXLabel(self.cfg['GRAPH']['name_ax_compare_x'])
+        self.setYLabel(self.cfg['GRAPH']['name_ax_compare_y'])
         self.getPlotItem().legend.setPen(self.pen_legend)

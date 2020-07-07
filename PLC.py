@@ -93,14 +93,18 @@ class PLC(QtCore.QThread):
         trace.load_trace_csv(filename)
         khz = self.cfg['GRAPH'].getint('resolution_khz')
 
-        soll_data = [i * 60 * 0.981 for i in self.array_soll.read()]
-        offset = 30
-        soll_x = offset_x_soll(soll_data, offset)
-        pulsdauer = soll_x[-1] + 150
+        #soll_data = [i * 60 * 0.981 for i in self.array_soll.read()]
+        # todo test calc to m/s²
+        soll_data = [i * 0.981 for i in self.array_soll.read()]
+
+        offset = 35
+        soll_x = [i * 1000 for i in offset_x_soll(soll_data, offset)]
+        pulsdauer = soll_x[-1] + 50
 
         ist_x = [i * 1000 for i in trace.get_axis_time() if i * 1000 <= pulsdauer]
-
         ist_data = trace.get_axis_acc_from_speed(filtered=True)[:len(ist_x)]
+        # todo test calc to m/s²
+        ist_data = [i / 60 for i in ist_data]
 
         fig = plt.figure(dpi=self.dpi, figsize=(self.size_x.read() / self.dpi, self.size_y.read() / self.dpi))
         fig.subplots_adjust(top=self.cfg['PLCGRAPH'].getfloat('adjust_top'),

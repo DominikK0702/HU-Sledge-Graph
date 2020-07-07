@@ -159,8 +159,8 @@ class TracePlot(pg.GraphicsLayoutWidget):
         self.change_axis()
 
     def autoRange(self):
-        # if self.plot_active:
-        #    self.ax_.axis.autoRange()
+        #if self.plot_active:
+        #   self.ax_.axis.autoRange()
         pass
 
     def set_viewmode(self):

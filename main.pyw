@@ -75,13 +75,13 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_trace_loadfile.clicked.connect(self.handle_btn_trace_loadfile)
         self.btn_trace_loadlast.clicked.connect(self.handle_btn_trace_loadlast)
         self.btn_trace_save.clicked.connect(self.handle_btn_trace_save)
-        self.btn_autorange.clicked.connect(self.trace_plot.autoRange)
+        self.btn_autorange.clicked.connect(self.graph.auto_range)
 
     def handle_btn_load(self):
         options = QFileDialog.Options()
         if not self.cfg['GUI'].getboolean('use_native_filedialog'):
             options |= QFileDialog.DontUseNativeDialog
-        fileName, fileType = QFileDialog.getOpenFileName(self, self.cfg['STRINGS']['csv_load_title'], "", "CSV (*.csv)",
+        fileName, fileType = QFileDialog.getOpenFileName(self, self.cfg['STRINGS']['csv_load_title'], "", "Puls CSV (*.pcsv)",
                                                          options=options)
         self.current_data_x = []
         self.current_data_y = []
@@ -103,14 +103,13 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
 
             self.graph.enableAutoRange(x=True, y=True)
-            self.tabWidget.setCurrentIndex(0)
             self.graph.setTitle(self.cfg['STRINGS']['graph_title_current'])
 
     def handle_btn_save(self):
         options = QFileDialog.Options()
         if not self.cfg['GUI'].getboolean('use_native_filedialog'):
             options |= QFileDialog.DontUseNativeDialog
-        fileName, fileType = QFileDialog.getSaveFileName(self, self.cfg['STRINGS']['csv_save_title'], "", "CSV (*.csv)",
+        fileName, fileType = QFileDialog.getSaveFileName(self, self.cfg['STRINGS']['csv_save_title'], "", "Puls CSV (*.pcsv)",
                                                          options=options)
         if fileName:
             khz = self.cfg['GRAPH'].getint('resolution_khz')
@@ -134,7 +133,6 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.graph.setTitle(self.cfg['STRINGS']['graph_title_compare'])
         self.current_data_x = []
         self.current_data_y = []
-
         self.graph.plot_compare(self.compare_trace, self.compare_soll_data_y)
         self.statusbar.showMessage(self.cfg['STRINGS']['status_plc_data_loaded'])
 
@@ -167,7 +165,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         if not self.cfg['GUI'].getboolean('use_native_filedialog'):
             options |= QFileDialog.DontUseNativeDialog
         fileName, fileType = QFileDialog.getOpenFileName(self, self.cfg['STRINGS']['trace_load_title'], "",
-                                                         "Trace CSV (*.csv);;Trace ACX (*.ACX.GZ)",
+                                                         "Trace CSV (*.tcsv);;Trace ACX (*.ACX.GZ)",
                                                          options=options)
         if fileName and fileType == 'Trace ACX (*.ACX.GZ)':
             self.trace_plot.load_trace_acx(fileName)
@@ -184,13 +182,13 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.statusbar.showMessage(str(e))
 
     def handle_btn_trace_save(self):
-        if self.current_trace.datapoints <= 0:
+        if self.trace_plot.trace.datapoints <= 0:
             return
         options = QFileDialog.Options()
         if not self.cfg['GUI'].getboolean('use_native_filedialog'):
             options |= QFileDialog.DontUseNativeDialog
         fileName, fileType = QFileDialog.getSaveFileName(self, self.cfg['STRINGS']['trace_save_title'], "",
-                                                         "CSV (*.csv)",
+                                                         "Trace CSV (*.tcsv)",
                                                          options=options)
         if fileName:
             try:

@@ -13,8 +13,7 @@ def diff(array, td):
 
 
 def offset_x_soll(array, steps):
-    faktor = 1000
-    return [(i / 16000) * faktor for i in range(steps, len(array) + steps)]
+    return [(i / 16000) for i in range(steps, len(array) + steps)]
 
 
 class Trace:
