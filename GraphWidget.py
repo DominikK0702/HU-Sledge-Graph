@@ -4,6 +4,7 @@ from PIL import ImageColor
 from bisect import bisect_left
 from scipy.signal import savgol_filter
 from TraceHelper import offset_x_soll
+from scipy import interpolate
 
 
 def take_closest(array, value):
@@ -15,6 +16,9 @@ class EditCurve(pg.PolyLineROI):
     def __init__(self, drawer):
         self.drawer = drawer
         self.points_count = 3
+        self.mode_interpolate = False
+        self.mode_standard = False
+        self.mode_y_linked = False
         self.index = None
         self.linked = False
         self.points = []
@@ -45,18 +49,33 @@ class EditCurve(pg.PolyLineROI):
             if i['pos'].__repr__().find('PyQt5.QtCore.QPointF') >= 0:
                 any = True
                 y = i['pos'].y()
+                self.moved_y = y
+                x = i['pos'].x()
+                self.moved_x = x
                 self.drawer.mainwindow.current_data_y[self.index - (self.points_count // 2) + cnt] = y
         if any:
-            if self.linked:
+            if self.mode_y_linked:
                 for cnt, i in enumerate(self.handles):
-                    self.drawer.mainwindow.current_data_y[self.index - (self.points_count // 2) + cnt] = y
+                    self.drawer.mainwindow.current_data_y[self.index - (self.points_count // 2) + cnt] = self.moved_y
+
+            elif self.mode_interpolate:
+                x = [self.handles[0]['pos'].x(),x,self.handles[-1]['pos'].x(),self.handles[-1]['pos'].x()+0.0001]
+                y = [self.handles[0]['pos'].y(),y,self.handles[-1]['pos'].y(),self.handles[-1]['pos'].y()]
+                f = interpolate.interp1d(x, y, kind='cubic')
+                intp = [f(i['pos'].x()) for i in self.handles]
+                for cnt, i in enumerate(intp):
+                    self.drawer.mainwindow.current_data_y[self.index - (self.points_count // 2) + cnt] = float(i)
 
             self.drawer.plot(self.drawer.mainwindow.current_data_x, self.drawer.mainwindow.current_data_y, clear=True,
                              pen=self.drawer.mainwindow.pen_current,
                              name=self.drawer.cfg['STRINGS']['graph_current_label'])
+            self.drawer.setTitle(f'{self.drawer.mainwindow.current_file_name} Modifiziert')
             self.drawer.getPlotItem().legend.setPen(self.drawer.pen_legend)
 
     def setDataPoints(self, datax, datay, pos):
+        self.mode_interpolate = self.drawer.mainwindow.radioButton_interpolate.isChecked()
+        self.mode_standard = self.drawer.mainwindow.radioButton_standard.isChecked()
+        self.mode_y_linked = self.drawer.mainwindow.radioButton_y_linked.isChecked()
         self.points = []
         self.data = []
         for cnt, i in enumerate(datax):
@@ -64,9 +83,48 @@ class EditCurve(pg.PolyLineROI):
         self.index = take_closest(datax, pos.x())
         self.points = self.data[self.index - self.points_count // 2:self.index + (self.points_count // 2) + 1]
         self.setPoints(self.points, closed=False)
-        for i in self.getHandles():
-            print(i)
-            # todo mhmhmh
+        for h in self.handles:
+            h['item'].xChanged.connect(self.lock_x)
+            h['item'].yChanged.connect(self.intp_y)
+
+    def lock_x(self):
+        for cnt, i in enumerate(self.points):
+            self.handles[cnt]['item'].setX(i[0])
+
+    def intp_y(self):
+        if self.mode_interpolate:
+            try:
+                any = False
+                for cnt, i in enumerate(self.handles):
+                    if i['pos'].__repr__().find('PyQt5.QtCore.QPointF') >= 0:
+                        self.moved_y = i['pos'].y()
+                        self.moved_x = self.points[cnt][0]
+                        #self.moved_x = i['pos'].x()
+                        any = True
+
+                if any:
+                    x = [self.handles[0]['pos'].x(), self.moved_x, self.handles[-1]['pos'].x(), self.handles[-1]['pos'].x() + 0.000001]
+                    y = [self.handles[0]['pos'].y(), self.moved_y, self.handles[-1]['pos'].y(), self.handles[-1]['pos'].y()]
+                    f = interpolate.interp1d(x, y, kind='cubic')
+                    intp = [f(i['pos'].x()) for i in self.handles]
+                    for cnt, i in enumerate(intp):
+                        self.handles[cnt]['item'].setY(i)
+                        #self.drawer.mainwindow.current_data_y[self.index - (self.points_count // 2) + cnt] = float(i)
+            except Exception as e:
+                self.drawer.mainwindow.statusbar.showMessage(str(e))
+
+        elif self.mode_y_linked:
+            any = False
+            for cnt, i in enumerate(self.handles):
+                if i['pos'].__repr__().find('PyQt5.QtCore.QPointF') >= 0:
+                    self.moved_y = i['pos'].y()
+                    self.moved_x = self.points[cnt][0]
+                    # self.moved_x = i['pos'].x()
+                    any = True
+
+            if any:
+                for cnt, i in enumerate(self.handles):
+                    i['item'].setY(self.moved_y)
 
 
 class Graph(pg.PlotWidget):

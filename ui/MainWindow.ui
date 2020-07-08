@@ -522,6 +522,45 @@ QComboBox QAbstractItemView {
                      <number>7</number>
                     </property>
                     <item>
+                     <widget class="QRadioButton" name="radioButton_standard">
+                      <property name="font">
+                       <font>
+                        <pointsize>10</pointsize>
+                       </font>
+                      </property>
+                      <property name="text">
+                       <string>Standard</string>
+                      </property>
+                      <property name="checked">
+                       <bool>true</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QRadioButton" name="radioButton_y_linked">
+                      <property name="font">
+                       <font>
+                        <pointsize>10</pointsize>
+                       </font>
+                      </property>
+                      <property name="text">
+                       <string>Achse Y Verlinkt</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QRadioButton" name="radioButton_interpolate">
+                      <property name="font">
+                       <font>
+                        <pointsize>10</pointsize>
+                       </font>
+                      </property>
+                      <property name="text">
+                       <string>Interpolieren</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
                      <widget class="QCheckBox" name="checkBox_pulseLinked">
                       <property name="font">
                        <font>
@@ -533,7 +572,7 @@ QComboBox QAbstractItemView {
                        <enum>Qt::LeftToRight</enum>
                       </property>
                       <property name="text">
-                       <string>Verlinkt</string>
+                       <string>Achse Y Verlinkt</string>
                       </property>
                       <property name="tristate">
                        <bool>false</bool>

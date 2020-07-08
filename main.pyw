@@ -23,6 +23,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.compare_soll_data_y = []
         self.ist_data_y = []
         self.edit_mode = False
+        self.current_file_name = ''
         self.current_trace = TraceHelper.Trace()
 
         self.compare_trace = TraceHelper.Trace()
@@ -105,7 +106,8 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                 self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
 
                 self.graph.enableAutoRange(x=True, y=True)
-                self.graph.setTitle(self.cfg['STRINGS']['graph_title_current'])
+                self.graph.setTitle(fileName.split('/')[-1])
+                self.current_file_name = fileName.split('/')[-1]
             except Exception as e:
                 self.statusbar.showMessage(str(e))
 
@@ -117,12 +119,12 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                                                          "Puls CSV (*.pcsv)",
                                                          options=options)
         if fileName:
-            khz = self.cfg['GRAPH'].getint('resolution_khz')
             with open(fileName, 'w', encoding='utf-8', newline='') as file:
                 writer = csv.writer(file, delimiter=';')
+                x = TraceHelper.offset_x_soll(self.current_data_y,0)
                 for count, i in enumerate(self.current_data_y):
                     writer.writerow(
-                        [format((count + 1) / (khz * 1000), f'.{self.cfg["GRAPH"]["csv_export_float_precision_x"]}f'),
+                        [format(x[count], f'.{self.cfg["GRAPH"]["csv_export_float_precision_x"]}f'),
                          format(i, f'.{self.cfg["GRAPH"]["csv_export_float_precision_y"]}f')])
 
             self.statusbar.showMessage(self.cfg['STRINGS']['status_csv_saved'])
