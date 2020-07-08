@@ -1014,6 +1014,11 @@ QComboBox QAbstractItemView {
            <layout class="QVBoxLayout" name="tab_layout_parameter">
             <item>
              <widget class="QPushButton" name="pushButton">
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
               <property name="text">
                <string>Parameter Bin Laden</string>
               </property>
