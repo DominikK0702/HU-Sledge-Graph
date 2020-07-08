@@ -81,6 +81,18 @@ class Int:
     def write(self, value):
         self.client.writeInt(self.db, self.start, value)
 
+class LTime:
+    def __init__(self, client, db, start):
+        self.client = client
+        self.db = db
+        self.start = start
+
+    def read(self, getdt=False):
+        return self.client.readLTime(self.db, self.start, getdt=getdt)
+
+    def write(self, value):
+        raise NotImplementedError
+
 class String:
     def __init__(self, client, db, start, length=255):
         self.client = client

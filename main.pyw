@@ -81,35 +81,40 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         options = QFileDialog.Options()
         if not self.cfg['GUI'].getboolean('use_native_filedialog'):
             options |= QFileDialog.DontUseNativeDialog
-        fileName, fileType = QFileDialog.getOpenFileName(self, self.cfg['STRINGS']['csv_load_title'], "", "Puls CSV (*.pcsv)",
+        fileName, fileType = QFileDialog.getOpenFileName(self, self.cfg['STRINGS']['csv_load_title'], "",
+                                                         "Puls CSV (*.pcsv)",
                                                          options=options)
         self.current_data_x = []
         self.current_data_y = []
         if fileName:
-            with open(fileName, 'r', encoding='utf-8') as file:
-                reader = csv.reader(file, delimiter=';')
-                for row in reader:
-                    self.current_data_x.append(float(row[0].replace(',', '.')))
-                    self.current_data_y.append(float(row[1].replace(',', '.')))
+            try:
+                with open(fileName, 'r', encoding='utf-8') as file:
+                    reader = csv.reader(file, delimiter=';')
+                    for row in reader:
+                        self.current_data_x.append(float(row[0].replace(',', '.')))
+                        self.current_data_y.append(float(row[1].replace(',', '.')))
 
-            self.statusbar.showMessage(self.cfg['STRINGS']['status_csv_loaded'])
-            self.btn_tool_edit.setChecked(False)
-            self.btn_tool_cursor.setChecked(False)
-            self.graph.cursor.enabled(False)
-            self.graph.clear()
+                self.statusbar.showMessage(self.cfg['STRINGS']['status_csv_loaded'])
+                self.btn_tool_edit.setChecked(False)
+                self.btn_tool_cursor.setChecked(False)
+                self.graph.cursor.enabled(False)
+                self.graph.clear()
 
-            self.graph.plot(self.current_data_x, self.current_data_y, pen=self.pen_current,
-                            name=self.cfg['STRINGS']['graph_current_label'])
-            self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
+                self.graph.plot(self.current_data_x, self.current_data_y, pen=self.pen_current,
+                                name=self.cfg['STRINGS']['graph_current_label'])
+                self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
 
-            self.graph.enableAutoRange(x=True, y=True)
-            self.graph.setTitle(self.cfg['STRINGS']['graph_title_current'])
+                self.graph.enableAutoRange(x=True, y=True)
+                self.graph.setTitle(self.cfg['STRINGS']['graph_title_current'])
+            except Exception as e:
+                self.statusbar.showMessage(str(e))
 
     def handle_btn_save(self):
         options = QFileDialog.Options()
         if not self.cfg['GUI'].getboolean('use_native_filedialog'):
             options |= QFileDialog.DontUseNativeDialog
-        fileName, fileType = QFileDialog.getSaveFileName(self, self.cfg['STRINGS']['csv_save_title'], "", "Puls CSV (*.pcsv)",
+        fileName, fileType = QFileDialog.getSaveFileName(self, self.cfg['STRINGS']['csv_save_title'], "",
+                                                         "Puls CSV (*.pcsv)",
                                                          options=options)
         if fileName:
             khz = self.cfg['GRAPH'].getint('resolution_khz')

@@ -1,6 +1,5 @@
 from PyQt5 import QtCore
 import matplotlib.pyplot as plt
-from scipy.signal import savgol_filter
 from SinamicsExport import get_last_trace
 from PyLcSnap7.PLC import S7Conn
 from PyLcSnap7 import Smarttags
@@ -14,18 +13,36 @@ class UDT_Trigger:
         self._start = start
         self.enabled = Smarttags.Bool(self._plc, self._db, self._start, 0)
         self.name = Smarttags.String(self._plc, self._db, self._start + 2, 16)
-        self.time = Smarttags.Int(self._plc, self._db, self._start + 20)
+        self.time = Smarttags.LTime(self._plc, self._db, self._start + 20)
 
 
 class GDB_Versuchsdaten:
-    def __init__(self, plc, cfg):
+    def __init__(self, plc, cfg, db):
         self.plc = plc
         self.cfg = cfg
-        self.versuchsnummer = Smarttags.String(self.plc, 894, 0, 64)
-        self.versuchstyp = Smarttags.String(self.plc, 894, 66, 64)
-        self.bediener = Smarttags.String(self.plc, 894, 132, 64)
-        self.kommentar = Smarttags.String(self.plc, 894, 198, 64)
-        self.trigger01 = UDT_Trigger(self.plc, 894, 264)
+        self.db = db
+        self.versuchsnummer = Smarttags.String(self.plc, self.db, 0, 64)
+        self.versuchstyp = Smarttags.String(self.plc, self.db, 66, 64)
+        self.bediener = Smarttags.String(self.plc, self.db, 132, 64)
+        self.kommentar = Smarttags.String(self.plc, self.db, 198, 64)
+        self.trigger01 = UDT_Trigger(self.plc, self.db, 264)
+        self.trigger02 = UDT_Trigger(self.plc, self.db, 292)
+        self.trigger03 = UDT_Trigger(self.plc, self.db, 320)
+        self.trigger04 = UDT_Trigger(self.plc, self.db, 348)
+        self.trigger05 = UDT_Trigger(self.plc, self.db, 376)
+        self.trigger06 = UDT_Trigger(self.plc, self.db, 404)
+        self.trigger07 = UDT_Trigger(self.plc, self.db, 432)
+        self.trigger08 = UDT_Trigger(self.plc, self.db, 460)
+        self.trigger09 = UDT_Trigger(self.plc, self.db, 488)
+        self.trigger10 = UDT_Trigger(self.plc, self.db, 516)
+        self.trigger11 = UDT_Trigger(self.plc, self.db, 544)
+        self.trigger12 = UDT_Trigger(self.plc, self.db, 572)
+        self.trigger13 = UDT_Trigger(self.plc, self.db, 600)
+        self.trigger14 = UDT_Trigger(self.plc, self.db, 628)
+        self.trigger15 = UDT_Trigger(self.plc, self.db, 656)
+        self.startpos = Smarttags.Real(self.plc, self.db, 684)
+        self.endpos = Smarttags.Real(self.plc, self.db, 688)
+        self.zuladung = Smarttags.Real(self.plc, self.db, 692)
 
 
 class PLC(QtCore.QThread):
@@ -34,9 +51,7 @@ class PLC(QtCore.QThread):
         self.parent = parent
         self.cfg = parent.cfg
         self.plc = S7Conn(self.cfg['PLC']['ip'])
-        x = self.plc.readLTime(894,284)
-        self.plc.writeLTime(894,284,x.microseconds)
-        self.gdb_versuchsdaten = GDB_Versuchsdaten(self.plc, self.cfg)
+        self.gdb_versuchsdaten = GDB_Versuchsdaten(self.plc, self.cfg, 894)
         self.keep_alive = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_in'), 0, 0)
         self.regler_date_ready = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_out'), 0, 0)
         self.array_ist = Smarttags.RealArray(self.plc, self.cfg['PLC'].getint('db_ist'), 0, 3000)
