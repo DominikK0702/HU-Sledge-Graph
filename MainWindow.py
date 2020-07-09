@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './ui/MainWindow.ui'
+# Form implementation generated from reading ui file 'MainWindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.0
 #
@@ -14,8 +14,12 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1517, 1082)
+        MainWindow.setWindowModality(QtCore.Qt.NonModal)
+        MainWindow.resize(1357, 934)
         MainWindow.setMinimumSize(QtCore.QSize(800, 600))
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        MainWindow.setFont(font)
         MainWindow.setStyleSheet("QPushButton {\n"
 "  background-color: #d9ddff;\n"
 "  background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, \n"
@@ -77,6 +81,10 @@ class Ui_MainWindow(object):
 "  background-color: #d9ddff;\n"
 "  selection-background-color: #1464A0;\n"
 "}")
+        MainWindow.setIconSize(QtCore.QSize(24, 24))
+        MainWindow.setDocumentMode(False)
+        MainWindow.setTabShape(QtWidgets.QTabWidget.Rounded)
+        MainWindow.setDockNestingEnabled(False)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(1)
@@ -110,8 +118,12 @@ class Ui_MainWindow(object):
         self.logoLayout.setContentsMargins(10, 10, -1, -1)
         self.logoLayout.setObjectName("logoLayout")
         self.logo = QtWidgets.QLabel(self.headWidget)
+        self.logo.setMinimumSize(QtCore.QSize(231, 61))
+        self.logo.setBaseSize(QtCore.QSize(0, 0))
         self.logo.setText("")
-        self.logo.setAlignment(QtCore.Qt.AlignCenter)
+        self.logo.setTextFormat(QtCore.Qt.AutoText)
+        self.logo.setPixmap(QtGui.QPixmap("../assets/logo.png"))
+        self.logo.setAlignment(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignTop)
         self.logo.setOpenExternalLinks(False)
         self.logo.setObjectName("logo")
         self.logoLayout.addWidget(self.logo)
@@ -507,18 +519,31 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setStretch(1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1517, 18))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1357, 18))
+        self.menubar.setDefaultUp(False)
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
+        self.menuInfo = QtWidgets.QMenu(self.menubar)
+        self.menuInfo.setObjectName("menuInfo")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar.setMinimumSize(QtCore.QSize(0, 0))
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.statusbar.setFont(font)
+        self.statusbar.setSizeGripEnabled(True)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
         self.actionExit = QtWidgets.QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
+        self.actionInfo = QtWidgets.QAction(MainWindow)
+        self.actionInfo.setCheckable(False)
+        self.actionInfo.setObjectName("actionInfo")
         self.menuFile.addAction(self.actionExit)
+        self.menuInfo.addAction(self.actionInfo)
         self.menubar.addAction(self.menuFile.menuAction())
+        self.menubar.addAction(self.menuInfo.menuAction())
 
         self.retranslateUi(MainWindow)
         self.tabWidgetTools.setCurrentIndex(0)
@@ -573,4 +598,6 @@ class Ui_MainWindow(object):
         self.pushButton.setText(_translate("MainWindow", "Parameter Bin Laden"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.parameter), _translate("MainWindow", "Parameter"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
+        self.menuInfo.setTitle(_translate("MainWindow", "Help"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
+        self.actionInfo.setText(_translate("MainWindow", "Info"))

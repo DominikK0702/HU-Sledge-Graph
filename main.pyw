@@ -7,6 +7,7 @@ from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget
 from MainWindow import Ui_MainWindow
+from InfoDialog import Ui_InfoDialog
 from PLC import PLC
 from GraphWidget import Graph
 from TraceWidget import TracePlot
@@ -60,10 +61,12 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         if self.cfg['GUI'].getboolean('maximized'): self.showMaximized()
         if self.cfg['GUI'].getboolean('fullscreen'): self.showFullScreen()
 
+
     def reset_tools(self):
         self.btn_tool_edit.setChecked(False)
         self.btn_tool_cursor.setChecked(False)
         self.graph.cursor.enabled(False)
+
 
     def connect_componets(self):
         # Buttons
@@ -77,6 +80,14 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_trace_loadlast.clicked.connect(self.handle_btn_trace_loadlast)
         self.btn_trace_save.clicked.connect(self.handle_btn_trace_save)
         self.btn_autorange.clicked.connect(self.graph.auto_range)
+
+        self.actionInfo.triggered.connect(self.show_dialoginfo)
+
+    def show_dialoginfo(self):
+        self.info_dialog = QMainWindow(self)
+        self.info_ui = Ui_InfoDialog()
+        self.info_ui.setupUi(self.info_dialog)
+        self.info_dialog.show()
 
     def handle_btn_load(self):
         options = QFileDialog.Options()
