@@ -114,7 +114,7 @@ class PLC(QtCore.QThread):
         while not done:
             try:
                 ax.plot(
-                    [(i + 1) / (self.cfg['GRAPH'].getint('resolution_khz')) for i in range(len(soll))],
+                    offset_x_soll(soll,0),
                     soll,
                     linewidth=self.soll_linewidth.read(),
                     color='#' + self.soll_color.read())

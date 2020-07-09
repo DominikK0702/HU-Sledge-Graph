@@ -81,7 +81,18 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_trace_save.clicked.connect(self.handle_btn_trace_save)
         self.btn_autorange.clicked.connect(self.graph.auto_range)
 
+        self.btn_protocol_last.clicked.connect(self.handle_load_last_protocol)
+
         self.actionInfo.triggered.connect(self.show_dialoginfo)
+
+    def handle_load_last_protocol(self):
+        from Protocol import ProtocolJSON
+        trace = TraceHelper.Trace()
+        trace.load_trace_csv('./export/trace.csv')
+        j = ProtocolJSON()
+        j.set_trace(trace)
+        j.save('test.json')
+
 
     def show_dialoginfo(self):
         self.info_dialog = QMainWindow(self)
