@@ -74,6 +74,7 @@ class PLC(QtCore.QThread):
         self.plot_done_kompl = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_in'), 0, 2)
         self.soll_len = Smarttags.Int(self.plc, self.cfg['PLC'].getint('db_soll'), 12004)
         self.anf_submit_data = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_in'), 0, 4)
+        self.path_json_export = Smarttags.String(self.plc, self.cfg['PLC'].getint(''))
         self.dpi = 100
 
     def submit_data(self, datay):
