@@ -4,6 +4,7 @@ from SinamicsExport import get_last_trace
 from PyLcSnap7.PLC import S7Conn
 from PyLcSnap7 import Smarttags
 from TraceHelper import Trace, offset_x_soll
+from Protocol.ProtocolGen import ProtocolJson, ProtocolData
 
 
 class UDT_Trigger:
@@ -74,7 +75,7 @@ class PLC(QtCore.QThread):
         self.plot_done_kompl = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_in'), 0, 2)
         self.soll_len = Smarttags.Int(self.plc, self.cfg['PLC'].getint('db_soll'), 12004)
         self.anf_submit_data = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_in'), 0, 4)
-        self.path_json_export = Smarttags.String(self.plc, self.cfg['PLC'].getint(''))
+        self.path_json_export = Smarttags.String(self.plc, self.cfg['PLC'].getint('db_out'), 334, 255)
         self.dpi = 100
 
     def submit_data(self, datay):
@@ -115,7 +116,7 @@ class PLC(QtCore.QThread):
         while not done:
             try:
                 ax.plot(
-                    offset_x_soll(soll,0),
+                    offset_x_soll(soll, 0),
                     soll,
                     linewidth=self.soll_linewidth.read(),
                     color='#' + self.soll_color.read())
@@ -126,11 +127,82 @@ class PLC(QtCore.QThread):
         fig.savefig(self.var_url_03.read(), dpi=self.dpi)
         del (fig)
 
+    def store_json(self,trace,soll_x,soll_data):
+        store = ProtocolData()
+        # Info
+        store.data['versuchsnummer'] = self.gdb_versuchsdaten.versuchsnummer.read()
+        store.data['versuchstyp'] = self.gdb_versuchsdaten.versuchstyp.read()
+        store.data['bediener'] = self.gdb_versuchsdaten.bediener.read()
+        store.data['kommentar'] = self.gdb_versuchsdaten.kommentar.read()
+        store.data['startpos'] = self.gdb_versuchsdaten.startpos.read()
+        store.data['endpos'] = self.gdb_versuchsdaten.endpos.read()
+        store.data['zuladung'] = self.gdb_versuchsdaten.zuladung.read()
+        # Trigger
+        store.data['trigger']['01']['enabled'] = self.gdb_versuchsdaten.trigger01.enabled.read()
+        store.data['trigger']['01']['name'] = self.gdb_versuchsdaten.trigger01.name.read()
+        store.data['trigger']['01']['zeit'] = self.gdb_versuchsdaten.trigger01.time.read()
+        store.data['trigger']['02']['enabled'] = self.gdb_versuchsdaten.trigger02.enabled.read()
+        store.data['trigger']['02']['name'] = self.gdb_versuchsdaten.trigger02.name.read()
+        store.data['trigger']['02']['zeit'] = self.gdb_versuchsdaten.trigger02.time.read()
+        store.data['trigger']['03']['enabled'] = self.gdb_versuchsdaten.trigger03.enabled.read()
+        store.data['trigger']['03']['name'] = self.gdb_versuchsdaten.trigger03.name.read()
+        store.data['trigger']['03']['zeit'] = self.gdb_versuchsdaten.trigger03.time.read()
+        store.data['trigger']['04']['enabled'] = self.gdb_versuchsdaten.trigger04.enabled.read()
+        store.data['trigger']['04']['name'] = self.gdb_versuchsdaten.trigger04.name.read()
+        store.data['trigger']['04']['zeit'] = self.gdb_versuchsdaten.trigger04.time.read()
+        store.data['trigger']['05']['enabled'] = self.gdb_versuchsdaten.trigger05.enabled.read()
+        store.data['trigger']['05']['name'] = self.gdb_versuchsdaten.trigger05.name.read()
+        store.data['trigger']['05']['zeit'] = self.gdb_versuchsdaten.trigger05.time.read()
+        store.data['trigger']['06']['enabled'] = self.gdb_versuchsdaten.trigger06.enabled.read()
+        store.data['trigger']['06']['name'] = self.gdb_versuchsdaten.trigger06.name.read()
+        store.data['trigger']['06']['zeit'] = self.gdb_versuchsdaten.trigger06.time.read()
+        store.data['trigger']['07']['enabled'] = self.gdb_versuchsdaten.trigger07.enabled.read()
+        store.data['trigger']['07']['name'] = self.gdb_versuchsdaten.trigger07.name.read()
+        store.data['trigger']['07']['zeit'] = self.gdb_versuchsdaten.trigger07.time.read()
+        store.data['trigger']['08']['enabled'] = self.gdb_versuchsdaten.trigger08.enabled.read()
+        store.data['trigger']['08']['name'] = self.gdb_versuchsdaten.trigger08.name.read()
+        store.data['trigger']['08']['zeit'] = self.gdb_versuchsdaten.trigger08.time.read()
+        store.data['trigger']['09']['enabled'] = self.gdb_versuchsdaten.trigger09.enabled.read()
+        store.data['trigger']['09']['name'] = self.gdb_versuchsdaten.trigger09.name.read()
+        store.data['trigger']['09']['zeit'] = self.gdb_versuchsdaten.trigger09.time.read()
+        store.data['trigger']['10']['enabled'] = self.gdb_versuchsdaten.trigger10.enabled.read()
+        store.data['trigger']['10']['name'] = self.gdb_versuchsdaten.trigger10.name.read()
+        store.data['trigger']['10']['zeit'] = self.gdb_versuchsdaten.trigger10.time.read()
+        store.data['trigger']['11']['enabled'] = self.gdb_versuchsdaten.trigger11.enabled.read()
+        store.data['trigger']['11']['name'] = self.gdb_versuchsdaten.trigger11.name.read()
+        store.data['trigger']['11']['zeit'] = self.gdb_versuchsdaten.trigger11.time.read()
+        store.data['trigger']['12']['enabled'] = self.gdb_versuchsdaten.trigger12.enabled.read()
+        store.data['trigger']['12']['name'] = self.gdb_versuchsdaten.trigger12.name.read()
+        store.data['trigger']['12']['zeit'] = self.gdb_versuchsdaten.trigger12.time.read()
+        store.data['trigger']['13']['enabled'] = self.gdb_versuchsdaten.trigger13.enabled.read()
+        store.data['trigger']['13']['name'] = self.gdb_versuchsdaten.trigger13.name.read()
+        store.data['trigger']['13']['zeit'] = self.gdb_versuchsdaten.trigger13.time.read()
+        store.data['trigger']['14']['enabled'] = self.gdb_versuchsdaten.trigger14.enabled.read()
+        store.data['trigger']['14']['name'] = self.gdb_versuchsdaten.trigger14.name.read()
+        store.data['trigger']['14']['zeit'] = self.gdb_versuchsdaten.trigger14.time.read()
+        store.data['trigger']['15']['enabled'] = self.gdb_versuchsdaten.trigger15.enabled.read()
+        store.data['trigger']['15']['name'] = self.gdb_versuchsdaten.trigger15.name.read()
+        store.data['trigger']['15']['zeit'] = self.gdb_versuchsdaten.trigger15.time.read()
+        # Puls
+        store.data['puls_x'] = soll_x
+        store.data['puls_y'] = soll_data
+        # Trace
+        store.data['trace_vel'] = trace.get_axis_velocity()
+        store.data['trace_x'] = trace.get_axis_time()
+        store.data['trace_way'] = trace.get_axis_way()
+        store.data['trace_acc_way'] = trace.get_axis_acceleration()
+        store.data['trace_acc_vel'] = trace.get_axis_acc_from_speed(filtered=False)
+        store.data['trace_acc_vel_filt'] = trace.get_axis_acc_from_speed(filtered=True)
+        store.data['trace_voltage'] = trace.get_axis_voltage()
+        jsonObj = ProtocolJson()
+        jsonObj.json.data = store.data
+        jsonObj.save(self.path_json_export.read())
+
+
     def plot_kompl(self):
         filename = get_last_trace(self.cfg['PLC']['ip_cu320'], './export/trace.csv')
         trace = Trace()
         trace.load_trace_csv(filename)
-        khz = self.cfg['GRAPH'].getint('resolution_khz')
 
         # soll_data = [i * 60 * 0.981 for i in self.array_soll.read()]
         # todo test calc to m/s²
@@ -161,8 +233,12 @@ class PLC(QtCore.QThread):
 
         ax.plot(ist_x, ist_data, linewidth=self.ist_linewidth.read(),
                 color='#' + self.ist_color.read())
-        fig.savefig(self.var_url_02.read(), dpi=self.dpi)
-        fig.savefig(self.var_url_03.read(), dpi=self.dpi)
+        #fig.savefig(self.var_url_02.read(), dpi=self.dpi)
+        #fig.savefig(self.var_url_03.read(), dpi=self.dpi)
+        self.store_json(trace,soll_x,soll_data)
+        del(ax)
+        del(fig)
+
 
     def run(self):
         self.parent.statusbar.showMessage(self.cfg['STRINGS']['status_plc_connecting'])

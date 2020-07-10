@@ -86,12 +86,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.actionInfo.triggered.connect(self.show_dialoginfo)
 
     def handle_load_last_protocol(self):
-        from Protocol import ProtocolJSON
-        trace = TraceHelper.Trace()
-        trace.load_trace_csv('./export/trace.csv')
-        j = ProtocolJSON()
-        j.set_trace(trace)
-        j.save('test.json')
+        pass
 
 
     def show_dialoginfo(self):
