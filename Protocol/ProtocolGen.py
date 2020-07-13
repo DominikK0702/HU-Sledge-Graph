@@ -55,5 +55,8 @@ class ProtocolJson:
         return f'{path}\\{self.json.data["versuchstyp"]}_{timestamp}{extension}'
 
     def save(self, filepath):
+        if filepath == '':
+            # Fallback to Default Path if string is empty
+            filepath = "./export/protocols"
         with open(self.gen_filename(filepath), 'w', encoding='utf-8') as f:
             f.write(json.dumps(self.json.data))
