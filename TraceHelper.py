@@ -78,7 +78,24 @@ class Trace:
                 self.axis_way.append(float(row[2].replace(',', '.'))/1000)
                 self.axis_voltage.append((float(row[3].replace(',', '.'))))
                 self.axis_acceleration.append(float(row[4].replace(',', '.'))/60)
+
+
+    def load_trace_from_protocol(self, protocol):
+        self.datapoints = 0
+        self.axis_x = []
+        self.axis_velocity = []
+        self.axis_way = []
+        self.axis_voltage = []
+        self.axis_acceleration = []
+        # Magic...
+        self.axis_x = protocol.json.data['trace_x']
+        self.axis_velocity = protocol.json.data['trace_vel']
+        self.axis_way = protocol.json.data['trace_way']
+        self.axis_voltage = protocol.json.data['trace_voltage']
+        self.axis_acceleration = protocol.json.data['trace_acc_way']
+
         self.datapoints = len(self.axis_x)
+        print(1)
 
     def get_axis_time(self):
         return self.axis_x

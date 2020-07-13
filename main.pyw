@@ -1,11 +1,12 @@
 import sys
 import csv
+import os
 from PIL import ImageColor
 from SinamicsExport import get_last_trace
 from configparser import ConfigParser
 from PyQt5 import QtCore
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget, QTableWidgetItem
 from MainWindow import Ui_MainWindow
 from InfoDialog import Ui_InfoDialog
 from PLC import PLC
@@ -13,6 +14,7 @@ from GraphWidget import Graph
 from TraceWidget import TracePlot
 import pyqtgraph as pg
 import TraceHelper
+from Protocol import ProtocolGen
 
 
 class GraphMainWindow(QMainWindow, Ui_MainWindow):
@@ -28,6 +30,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.current_trace = TraceHelper.Trace()
 
         self.compare_trace = TraceHelper.Trace()
+        self.current_protocol = None
         self.cfg = config
 
         self.setupUi(self)
@@ -61,12 +64,10 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         if self.cfg['GUI'].getboolean('maximized'): self.showMaximized()
         if self.cfg['GUI'].getboolean('fullscreen'): self.showFullScreen()
 
-
     def reset_tools(self):
         self.btn_tool_edit.setChecked(False)
         self.btn_tool_cursor.setChecked(False)
         self.graph.cursor.enabled(False)
-
 
     def connect_componets(self):
         # Buttons
@@ -82,12 +83,116 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_autorange.clicked.connect(self.graph.auto_range)
 
         self.btn_protocol_last.clicked.connect(self.handle_load_last_protocol)
+        self.btn_protocol_import.clicked.connect(self.handle_load_protocol)
+        self.btn_protocol_pdfgen.clicked.connect(self.handle_generate_pdf_protocol)
 
         self.actionInfo.triggered.connect(self.show_dialoginfo)
 
-    def handle_load_last_protocol(self):
-        pass
+    def draw_protocol(self, protocol):
+        # general
+        self.tableWidget_general.setItem(0, 0, QTableWidgetItem(protocol.json.data['versuchstyp']))
+        self.tableWidget_general.setItem(1, 0, QTableWidgetItem(protocol.json.data['versuchsnummer']))
+        self.tableWidget_general.setItem(2, 0, QTableWidgetItem(protocol.json.data['kommentar']))
+        self.tableWidget_general.setItem(3, 0, QTableWidgetItem(protocol.json.data['bediener']))
+        self.tableWidget_general.setItem(4, 0, QTableWidgetItem(str(protocol.json.data['startpos']) + ' mm'))
+        self.tableWidget_general.setItem(5, 0, QTableWidgetItem(str(protocol.json.data['endpos']) + ' mm'))
+        self.tableWidget_general.setItem(6, 0, QTableWidgetItem(str(protocol.json.data['zuladung']) + ' kg'))
+        self.tableWidget_general.setItem(7, 0, QTableWidgetItem(protocol.json.data['timestamp']))
 
+        # triggers
+        for index, trig in enumerate(protocol.json.data['trigger'].items()):
+            self.tableWidget_trigger.setItem(index, 0, QTableWidgetItem(trig[1]['name']))
+            self.tableWidget_trigger.setItem(index, 1, QTableWidgetItem(str(trig[1]['zeit'])+' us'))
+            self.tableWidget_trigger.setItem(index, 2, QTableWidgetItem(str(trig[1]['enabled'])))
+
+        self.trace_plot.load_trace_protocol(protocol)
+
+        self.btn_tool_edit.setChecked(False)
+        self.btn_tool_cursor.setChecked(False)
+        self.graph.clear()
+        self.graph.setTitle('Protokoll')
+
+
+
+
+
+
+        # Plot Soll
+        offset_soll = 50
+        scaled_soll_data = protocol.json.data['puls_y']
+        soll_x = [i * 1000 for i in TraceHelper.offset_x_soll(scaled_soll_data, offset_soll)]
+        self.graph.plot(soll_x,
+                  scaled_soll_data,
+                  pen=self.graph.pen_soll, name=self.cfg['STRINGS']['graph_soll_label'])
+        cut_trace = True
+        pulsdauer = soll_x[-1] + 50
+        ist_x = []
+        ist_y = []
+        if cut_trace:
+            ist_x = [i * 1000 for i in self.trace_plot.trace.get_axis_time() if i*1000 <= pulsdauer]
+            ist_y = [i/60 for i in self.trace_plot.trace.get_axis_acc_from_speed(filtered=True)[:len(ist_x)]]
+        else:
+            ist_x = [i * 1000 for i in self.trace_plot.trace.get_axis_time()]
+            ist_y = [i/60 for i in self.trace_plot.trace.get_axis_acc_from_speed(filtered=True)]
+        # Plot Ist
+        self.graph.plot(ist_x, ist_y,
+                  pen=self.graph.pen_ist, name=self.cfg['STRINGS']['graph_ist_label'])
+
+
+        self.graph.auto_range()
+        self.graph.setXLabel(self.cfg['GRAPH']['name_ax_compare_x'])
+        self.graph.setYLabel(self.cfg['GRAPH']['name_ax_compare_y'])
+        self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
+
+
+
+        self.tabWidget.setCurrentIndex(2)
+
+
+    def handle_generate_pdf_protocol(self):
+        if self.current_protocol:
+            options = QFileDialog.Options()
+            if not self.cfg['GUI'].getboolean('use_native_filedialog'):
+                options |= QFileDialog.DontUseNativeDialog
+            fileName, fileType = QFileDialog.getSaveFileName(self, "Protokoll PDF speichern", "",
+                                                             "Protokoll PDF (*.pdf)",
+                                                             options=options)
+            if fileName:
+                pdf = ProtocolGen.ProtocolPDF(fileName, self.current_protocol.json)
+                self.statusbar.showMessage('Protokoll PDF zu erstellt.')
+        else:
+            self.statusbar.showMessage('Kein Protokoll geladen um PDF zu erstellen.')
+
+    def handle_load_last_protocol(self):
+        # path = self.plc.path_json_export.read()
+        path = ''
+        if path == '':
+            path = "./export/protocols"
+
+        # todo check ob das zuverlässig die neueste file ist
+        file = [i for i in os.listdir(path) if i[-6:] == '.pjson'][-1]
+        filename = os.path.join(path, file)
+        if filename:
+            protocol = ProtocolGen.ProtocolJson()
+            protocol.load(filename)
+            self.current_protocol = protocol
+            self.draw_protocol(self.current_protocol)
+            self.statusbar.showMessage('Protokoll des letzten Versuchs geladen.')
+        else:
+            self.statusbar.showMessage('Protokoll des letzten Versuchs laden gescheitert.')
+
+    def handle_load_protocol(self):
+        options = QFileDialog.Options()
+        if not self.cfg['GUI'].getboolean('use_native_filedialog'):
+            options |= QFileDialog.DontUseNativeDialog
+        fileName, fileType = QFileDialog.getOpenFileName(self, self.cfg['STRINGS']['csv_load_title'], "",
+                                                         "Protokoll JSON (*.pjson)",
+                                                         options=options)
+        if fileName:
+            protocol = ProtocolGen.ProtocolJson()
+            protocol.load(fileName)
+            self.current_protocol = protocol
+            self.draw_protocol(self.current_protocol)
 
     def show_dialoginfo(self):
         self.info_dialog = QMainWindow(self)
@@ -138,7 +243,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         if fileName:
             with open(fileName, 'w', encoding='utf-8', newline='') as file:
                 writer = csv.writer(file, delimiter=';')
-                x = TraceHelper.offset_x_soll(self.current_data_y,0)
+                x = TraceHelper.offset_x_soll(self.current_data_y, 0)
                 for count, i in enumerate(self.current_data_y):
                     writer.writerow(
                         [format(x[count], f'.{self.cfg["GRAPH"]["csv_export_float_precision_x"]}f'),
@@ -216,7 +321,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                                                          options=options)
         if fileName:
             try:
-                self.current_trace.save_to_csv(fileName)
+                self.trace_plot.trace.save_to_csv(fileName)
                 self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_saved'])
             except Exception as e:
                 self.statusbar.showMessage(str(e))

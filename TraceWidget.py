@@ -158,6 +158,12 @@ class TracePlot(pg.GraphicsLayoutWidget):
         self.plot_active = True
         self.change_axis()
 
+    def load_trace_protocol(self, protocol):
+        self.clear_trace()
+        self.trace.load_trace_from_protocol(protocol)
+        self.plot_active = True
+        self.change_axis()
+
     def autoRange(self):
         #if self.plot_active:
         #   self.ax_.axis.autoRange()

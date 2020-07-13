@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1357</width>
+    <width>1350</width>
     <height>934</height>
    </rect>
   </property>
@@ -1160,17 +1160,211 @@ QComboBox QAbstractItemView {
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_6">
           <item>
-           <layout class="QVBoxLayout" name="tab_layout_parameter">
+           <layout class="QHBoxLayout" name="tab_layout_protocol">
             <item>
-             <widget class="QPushButton" name="pushButton">
+             <widget class="QTableWidget" name="tableWidget_trigger">
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+                <weight>50</weight>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="lineWidth">
+               <number>1</number>
+              </property>
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
+              <property name="showGrid">
+               <bool>true</bool>
+              </property>
+              <attribute name="horizontalHeaderVisible">
+               <bool>false</bool>
+              </attribute>
+              <attribute name="horizontalHeaderCascadingSectionResizes">
+               <bool>false</bool>
+              </attribute>
+              <attribute name="horizontalHeaderDefaultSectionSize">
+               <number>100</number>
+              </attribute>
+              <attribute name="verticalHeaderDefaultSectionSize">
+               <number>32</number>
+              </attribute>
+              <attribute name="verticalHeaderShowSortIndicator" stdset="0">
+               <bool>false</bool>
+              </attribute>
+              <attribute name="verticalHeaderStretchLastSection">
+               <bool>false</bool>
+              </attribute>
+              <row>
+               <property name="text">
+                <string>Trigger 01</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 02</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 03</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 04</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 05</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 06</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 07</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 08</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 09</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 10</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 11</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 12</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 13</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 14</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Trigger 15</string>
+               </property>
+              </row>
+              <column>
+               <property name="text">
+                <string>Name</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Zeit [us]</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Aktiv</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTableWidget" name="tableWidget_general">
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
                </font>
               </property>
-              <property name="text">
-               <string>Parameter Bin Laden</string>
+              <property name="alternatingRowColors">
+               <bool>true</bool>
               </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::MultiSelection</enum>
+              </property>
+              <property name="cornerButtonEnabled">
+               <bool>true</bool>
+              </property>
+              <attribute name="horizontalHeaderVisible">
+               <bool>false</bool>
+              </attribute>
+              <attribute name="horizontalHeaderDefaultSectionSize">
+               <number>200</number>
+              </attribute>
+              <attribute name="verticalHeaderMinimumSectionSize">
+               <number>18</number>
+              </attribute>
+              <attribute name="verticalHeaderDefaultSectionSize">
+               <number>32</number>
+              </attribute>
+              <row>
+               <property name="text">
+                <string>Versuchstyp:</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Versuchsnummer:</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Kommentar:</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Bediener:</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Start Position:</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>End Position:</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Zuladung:</string>
+               </property>
+              </row>
+              <row>
+               <property name="text">
+                <string>Zeitpunkt:</string>
+               </property>
+              </row>
+              <column>
+               <property name="text">
+                <string/>
+               </property>
+              </column>
              </widget>
             </item>
            </layout>
@@ -1188,7 +1382,7 @@ QComboBox QAbstractItemView {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1357</width>
+     <width>1350</width>
      <height>18</height>
     </rect>
    </property>
