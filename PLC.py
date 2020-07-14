@@ -233,8 +233,8 @@ class PLC(QtCore.QThread):
 
         ax.plot(ist_x, ist_data, linewidth=self.ist_linewidth.read(),
                 color='#' + self.ist_color.read())
-        #fig.savefig(self.var_url_02.read(), dpi=self.dpi)
-        #fig.savefig(self.var_url_03.read(), dpi=self.dpi)
+        fig.savefig(self.var_url_02.read(), dpi=self.dpi)
+        fig.savefig(self.var_url_03.read(), dpi=self.dpi)
         self.store_json(trace,soll_x,soll_data)
         del(ax)
         del(fig)

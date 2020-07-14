@@ -97,7 +97,12 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.tableWidget_general.setItem(4, 0, QTableWidgetItem(str(protocol.json.data['startpos']) + ' mm'))
         self.tableWidget_general.setItem(5, 0, QTableWidgetItem(str(protocol.json.data['endpos']) + ' mm'))
         self.tableWidget_general.setItem(6, 0, QTableWidgetItem(str(protocol.json.data['zuladung']) + ' kg'))
-        self.tableWidget_general.setItem(7, 0, QTableWidgetItem(protocol.json.data['timestamp']))
+        timestamp = "Alte File Version"
+        try:
+            timestamp = str(self.data['timestamp'])
+        except Exception as e:
+            pass
+        self.tableWidget_general.setItem(7, 0, QTableWidgetItem(timestamp))
 
         # triggers
         for index, trig in enumerate(protocol.json.data['trigger'].items()):
@@ -321,7 +326,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                                                          options=options)
         if fileName:
             try:
-                self.trace_plot.trace.save_to_csv(fileName)
+                self.trace_plot.trace.save_to_csv(fileName, withaccfromspeed=True)
                 self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_saved'])
             except Exception as e:
                 self.statusbar.showMessage(str(e))

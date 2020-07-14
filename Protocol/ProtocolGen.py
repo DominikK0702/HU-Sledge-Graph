@@ -153,11 +153,16 @@ class ProtocolPDF:
         self.__elements.append(sp)
 
     def _table_general(self):
+        timestamp = "Alte File Version"
+        try:
+            timestamp = str(self.data['timestamp'])
+        except Exception as e:
+            pass
         data = [
             ["Versuchstyp:", self.data['versuchstyp']] + ["Start Position:", str(self.data['startpos']) + ' mm'],
             ["Versuchsnummer:", self.data['versuchsnummer']] + ["End Position:", str(self.data['endpos']) + ' mm'],
             ["Kommentar:", self.data['kommentar']] + ["Zuladung:", str(self.data['zuladung']) + ' kg'],
-            ["Bediener:", self.data['bediener']] + ["Zeitpunkt:", str(self.data['timestamp'])]
+            ["Bediener:", self.data['bediener']] + ["Zeitpunkt:", timestamp]
         ]
         table = Table(data)
         tblStlye = TableStyle(

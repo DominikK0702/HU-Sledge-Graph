@@ -37,17 +37,31 @@ class Trace:
         self.axis_voltage = []
         self.axis_acceleration = []
 
-    def save_to_csv(self, filename):
+    def save_to_csv(self, filename, withaccfromspeed=False):
+        if withaccfromspeed:
+            tmp_data = self.get_axis_acc_from_speed()
+            tmp_data_filtered = self.get_axis_acc_from_speed(filtered=True)
         with open(filename, 'w', encoding='utf-8', newline='') as f:
             writer = csv.writer(f, delimiter=';')
-            writer.writerow(self.header)
+            if self.header:
+                writer.writerow(self.header)
             for index, row in enumerate(self.axis_x):
-                writer.writerow([row,
-                                 self.axis_velocity[index],
-                                 self.axis_way[index],
-                                 self.axis_voltage[index],
-                                 self.axis_acceleration[index]
-                                 ])
+                if withaccfromspeed:
+                    writer.writerow([row,
+                                     self.axis_velocity[index],
+                                     self.axis_way[index],
+                                     self.axis_voltage[index],
+                                     self.axis_acceleration[index],
+                                     tmp_data[index],
+                                     tmp_data_filtered[index]
+                                     ])
+                else:
+                    writer.writerow([row,
+                                     self.axis_velocity[index],
+                                     self.axis_way[index],
+                                     self.axis_voltage[index],
+                                     self.axis_acceleration[index]
+                                     ])
 
     def load_trace_acx(self, filename=None):
         if filename: self.filename = filename
@@ -75,10 +89,9 @@ class Trace:
                     continue
                 self.axis_x.append(float(row[0].replace(',', '.')) / 1000)  # Conver from ms to s
                 self.axis_velocity.append(float(row[1].replace(',', '.')))
-                self.axis_way.append(float(row[2].replace(',', '.'))/1000)
+                self.axis_way.append(float(row[2].replace(',', '.')) / 1000)
                 self.axis_voltage.append((float(row[3].replace(',', '.'))))
-                self.axis_acceleration.append(float(row[4].replace(',', '.'))/60)
-
+                self.axis_acceleration.append(float(row[4].replace(',', '.')) / 60)
 
     def load_trace_from_protocol(self, protocol):
         self.datapoints = 0
