@@ -59,7 +59,6 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
 
         self.monitor = QDesktopWidget().screenGeometry(self.cfg['GUI'].getint('monitor_nr'))
         self.move(self.monitor.left(), self.monitor.top())
-
         if self.cfg['GUI'].getboolean('always_top'): self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
         if self.cfg['GUI'].getboolean('maximized'): self.showMaximized()
         if self.cfg['GUI'].getboolean('fullscreen'): self.showFullScreen()
@@ -99,7 +98,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.tableWidget_general.setItem(6, 0, QTableWidgetItem(str(protocol.json.data['zuladung']) + ' kg'))
         timestamp = "Alte File Version"
         try:
-            timestamp = str(self.data['timestamp'])
+            timestamp = str(protocol.json.data['timestamp'])
         except Exception as e:
             pass
         self.tableWidget_general.setItem(7, 0, QTableWidgetItem(timestamp))
@@ -107,7 +106,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         # triggers
         for index, trig in enumerate(protocol.json.data['trigger'].items()):
             self.tableWidget_trigger.setItem(index, 0, QTableWidgetItem(trig[1]['name']))
-            self.tableWidget_trigger.setItem(index, 1, QTableWidgetItem(str(trig[1]['zeit'])+' us'))
+            self.tableWidget_trigger.setItem(index, 1, QTableWidgetItem(str(trig[1]['zeit']/1e6) + ' ms'))
             self.tableWidget_trigger.setItem(index, 2, QTableWidgetItem(str(trig[1]['enabled'])))
 
         self.trace_plot.load_trace_protocol(protocol)
@@ -117,42 +116,33 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.graph.clear()
         self.graph.setTitle('Protokoll')
 
-
-
-
-
-
         # Plot Soll
         offset_soll = 50
         scaled_soll_data = protocol.json.data['puls_y']
         soll_x = [i * 1000 for i in TraceHelper.offset_x_soll(scaled_soll_data, offset_soll)]
         self.graph.plot(soll_x,
-                  scaled_soll_data,
-                  pen=self.graph.pen_soll, name=self.cfg['STRINGS']['graph_soll_label'])
+                        scaled_soll_data,
+                        pen=self.graph.pen_soll, name=self.cfg['STRINGS']['graph_soll_label'])
         cut_trace = True
         pulsdauer = soll_x[-1] + 50
         ist_x = []
         ist_y = []
         if cut_trace:
-            ist_x = [i * 1000 for i in self.trace_plot.trace.get_axis_time() if i*1000 <= pulsdauer]
-            ist_y = [i/60 for i in self.trace_plot.trace.get_axis_acc_from_speed(filtered=True)[:len(ist_x)]]
+            ist_x = [i * 1000 for i in self.trace_plot.trace.get_axis_time() if i * 1000 <= pulsdauer]
+            ist_y = [i / 60 for i in self.trace_plot.trace.get_axis_acc_from_speed(filtered=True)[:len(ist_x)]]
         else:
             ist_x = [i * 1000 for i in self.trace_plot.trace.get_axis_time()]
-            ist_y = [i/60 for i in self.trace_plot.trace.get_axis_acc_from_speed(filtered=True)]
+            ist_y = [i / 60 for i in self.trace_plot.trace.get_axis_acc_from_speed(filtered=True)]
         # Plot Ist
         self.graph.plot(ist_x, ist_y,
-                  pen=self.graph.pen_ist, name=self.cfg['STRINGS']['graph_ist_label'])
-
+                        pen=self.graph.pen_ist, name=self.cfg['STRINGS']['graph_ist_label'])
 
         self.graph.auto_range()
         self.graph.setXLabel(self.cfg['GRAPH']['name_ax_compare_x'])
         self.graph.setYLabel(self.cfg['GRAPH']['name_ax_compare_y'])
         self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
 
-
-
         self.tabWidget.setCurrentIndex(2)
-
 
     def handle_generate_pdf_protocol(self):
         if self.current_protocol:
@@ -169,8 +159,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.statusbar.showMessage('Kein Protokoll geladen um PDF zu erstellen.')
 
     def handle_load_last_protocol(self):
-        # path = self.plc.path_json_export.read()
-        path = ''
+        path = self.plc.path_json_export.read()
         if path == '':
             path = "./export/protocols"
 
@@ -203,6 +192,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.info_dialog = QMainWindow(self)
         self.info_ui = Ui_InfoDialog()
         self.info_ui.setupUi(self.info_dialog)
+        self.info_ui.label.setPixmap(QtGui.QPixmap('./assets/logo.png'))
         self.info_dialog.show()
 
     def handle_btn_load(self):
