@@ -159,7 +159,9 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.statusbar.showMessage('Kein Protokoll geladen um PDF zu erstellen.')
 
     def handle_load_last_protocol(self):
-        path = self.plc.path_json_export.read()
+        # todo enable path from plc
+        #path = self.plc.path_json_export.read()
+        path = ''
         if path == '':
             path = "./export/protocols"
 

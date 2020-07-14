@@ -127,6 +127,6 @@ class Trace:
 
     def get_axis_acc_from_speed(self, filtered=False):
         if filtered:
-            return [i for i in savgol_filter(diff(self.axis_velocity, (self.axis_x[2] - self.axis_x[1])), 51, 3)]
+            return [i for i in savgol_filter(diff(self.axis_velocity, (self.axis_x[2] - self.axis_x[1])), 21, 3)] # defaults 51,3
         else:
             return diff(self.axis_velocity, (self.axis_x[2] - self.axis_x[1]))
