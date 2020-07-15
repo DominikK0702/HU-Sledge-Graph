@@ -31,8 +31,8 @@
    <string notr="true">QPushButton {
   background-color: #d9ddff;
   background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, 
-  stop:0 rgba(150, 160, 255, 0.8), 
-  stop:1 rgba(105, 121, 255,0.8));
+  stop:0 rgba(230, 230, 230, 0.5), 
+  stop:1 #409bbb);
 
   border: 1px solid #32414B;
   border-radius: 6px;
@@ -43,17 +43,20 @@
 
 QPushButton:pressed {
 
-  background-color: #6270f5;
+  background-color: #1a607d;
 }
 
 QPushButton:pressed:hover {
   border: 1px solid rgba(105,182,255,255);
-   background-color: #6270f5;
+   background-color: #1a607d;
 }
 
 QPushButton:hover {
   border: 1px solid #148CD2;
   background-color: #b8bfff;
+  background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, 
+  stop:0 #409bbb,
+  stop:1 rgba(230, 230, 230, 0.5));
 }
 
 QPushButton:selected {
@@ -77,8 +80,8 @@ QPushButton:checked {
 QComboBox {
   background-color: #d9ddff;
   background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, 
-  stop:0 rgba(150, 160, 255, 255), 
-  stop:1 rgba(105, 121, 255,255));
+  stop:0 rgba(230, 230, 230, 0.5), 
+  stop:1 #409bbb);
   border: 1px solid #32414B;
   border-radius: 5px;
   selection-background-color: #1464A0;
@@ -86,8 +89,8 @@ QComboBox {
 QComboBox QAbstractItemView {
   border: 1px solid #32414B;
   border-radius: 2px;
-  background-color: #d9ddff;
-  selection-background-color: #1464A0;
+  background-color: rgba(230, 230, 230, 0.8);
+  selection-background-color: #409bbb;
 }</string>
   </property>
   <property name="iconSize">
@@ -1015,7 +1018,7 @@ QComboBox QAbstractItemView {
                  <property name="title">
                   <string>Importieren</string>
                  </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_10">
+                 <layout class="QHBoxLayout" name="horizontalLayout_14">
                   <item>
                    <layout class="QVBoxLayout" name="verticalLayout_9">
                     <property name="spacing">

@@ -1,3 +1,4 @@
+import glob
 import sys
 import csv
 import os
@@ -160,14 +161,12 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
 
     def handle_load_last_protocol(self):
         # todo enable path from plc
-        #path = self.plc.path_json_export.read()
-        path = ''
+        path = self.plc.path_json_export.read()
+        #path = ''
         if path == '':
             path = "./export/protocols"
 
-        # todo check ob das zuverlässig die neueste file ist
-        file = [i for i in os.listdir(path) if i[-6:] == '.pjson'][-1]
-        filename = os.path.join(path, file)
+        filename = max(glob.glob(path+'/*'), key=os.path.getmtime)
         if filename:
             protocol = ProtocolGen.ProtocolJson()
             protocol.load(filename)
