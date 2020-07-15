@@ -86,7 +86,27 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_protocol_import.clicked.connect(self.handle_load_protocol)
         self.btn_protocol_pdfgen.clicked.connect(self.handle_generate_pdf_protocol)
 
+        self.btn_tool_scale.clicked.connect(self.handle_scale)
+
         self.actionInfo.triggered.connect(self.show_dialoginfo)
+
+    def handle_scale(self):
+        factor = self.doubleSpinBox_scale_factor.value()
+        if factor == 1.0:
+            return
+        for index, i in enumerate(self.current_data_y):
+            self.current_data_y[index] = i*factor
+
+        self.btn_tool_edit.setChecked(False)
+        self.btn_tool_cursor.setChecked(False)
+        self.graph.cursor.enabled(False)
+        self.graph.clear()
+
+        self.graph.plot(self.current_data_x, self.current_data_y, pen=self.pen_current,
+                        name=self.cfg['STRINGS']['graph_current_label'])
+        self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
+
+        self.graph.enableAutoRange(x=True, y=True)
 
     def draw_protocol(self, protocol):
         # general
