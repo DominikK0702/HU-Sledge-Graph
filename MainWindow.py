@@ -83,6 +83,21 @@ class Ui_MainWindow(object):
 "  border-radius: 2px;\n"
 "  background-color: rgba(230, 230, 230, 0.8);\n"
 "  selection-background-color: #409bbb;\n"
+"}\n"
+"QDoubleSpinBox {\n"
+"  background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, \n"
+"  stop:0 rgba(230, 230, 230, 0.5), \n"
+"  stop:1 #409bbb);\n"
+"  border: 1px solid #32414B;\n"
+"  border-radius: 5px;\n"
+"}\n"
+"\n"
+"QSpinBox {\n"
+"  background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, \n"
+"  stop:0 rgba(230, 230, 230, 0.5), \n"
+"  stop:1 #409bbb);\n"
+"  border: 1px solid #32414B;\n"
+"  border-radius: 5px;\n"
 "}")
         MainWindow.setIconSize(QtCore.QSize(24, 24))
         MainWindow.setDocumentMode(False)
@@ -221,7 +236,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.cb_pulse_view.sizePolicy().hasHeightForWidth())
         self.cb_pulse_view.setSizePolicy(sizePolicy)
-        self.cb_pulse_view.setMinimumSize(QtCore.QSize(0, 0))
+        self.cb_pulse_view.setMinimumSize(QtCore.QSize(0, 23))
         self.cb_pulse_view.setSizeIncrement(QtCore.QSize(0, 0))
         self.cb_pulse_view.setBaseSize(QtCore.QSize(0, 0))
         font = QtGui.QFont()
@@ -253,6 +268,7 @@ class Ui_MainWindow(object):
         self.btn_tool_scale.setObjectName("btn_tool_scale")
         self.gridLayout_3.addWidget(self.btn_tool_scale, 2, 1, 1, 1)
         self.doubleSpinBox_scale_factor = QtWidgets.QDoubleSpinBox(self.groupBox_Tools)
+        self.doubleSpinBox_scale_factor.setMinimumSize(QtCore.QSize(0, 23))
         font = QtGui.QFont()
         font.setPointSize(10)
         font.setBold(False)
@@ -292,7 +308,8 @@ class Ui_MainWindow(object):
         self.verticalLayout_8 = QtWidgets.QVBoxLayout(self.groupBox_PulsSettings)
         self.verticalLayout_8.setObjectName("verticalLayout_8")
         self.verticalLayout_7 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_7.setContentsMargins(7, -1, 7, -1)
+        self.verticalLayout_7.setContentsMargins(7, -1, 7, 10)
+        self.verticalLayout_7.setSpacing(6)
         self.verticalLayout_7.setObjectName("verticalLayout_7")
         self.radioButton_standard = QtWidgets.QRadioButton(self.groupBox_PulsSettings)
         font = QtGui.QFont()
@@ -313,16 +330,8 @@ class Ui_MainWindow(object):
         self.radioButton_interpolate.setFont(font)
         self.radioButton_interpolate.setObjectName("radioButton_interpolate")
         self.verticalLayout_7.addWidget(self.radioButton_interpolate)
-        self.checkBox_pulseLinked = QtWidgets.QCheckBox(self.groupBox_PulsSettings)
-        font = QtGui.QFont()
-        font.setFamily("MS Shell Dlg 2")
-        font.setPointSize(10)
-        self.checkBox_pulseLinked.setFont(font)
-        self.checkBox_pulseLinked.setLayoutDirection(QtCore.Qt.LeftToRight)
-        self.checkBox_pulseLinked.setTristate(False)
-        self.checkBox_pulseLinked.setObjectName("checkBox_pulseLinked")
-        self.verticalLayout_7.addWidget(self.checkBox_pulseLinked)
         self.spinBox_PulseEditPointCount = QtWidgets.QSpinBox(self.groupBox_PulsSettings)
+        self.spinBox_PulseEditPointCount.setMinimumSize(QtCore.QSize(0, 23))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.spinBox_PulseEditPointCount.setFont(font)
@@ -336,6 +345,7 @@ class Ui_MainWindow(object):
         self.spinBox_PulseEditPointCount.setSingleStep(2)
         self.spinBox_PulseEditPointCount.setObjectName("spinBox_PulseEditPointCount")
         self.verticalLayout_7.addWidget(self.spinBox_PulseEditPointCount)
+        self.verticalLayout_7.setStretch(3, 1)
         self.verticalLayout_8.addLayout(self.verticalLayout_7)
         self.horizontalLayout_9.addWidget(self.groupBox_PulsSettings)
         self.groupBox_PLC = QtWidgets.QGroupBox(self.tool_tab_puls)
@@ -419,6 +429,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.setContentsMargins(7, -1, 7, -1)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.cb_trace_view = QtWidgets.QComboBox(self.groupBox_2)
+        self.cb_trace_view.setMinimumSize(QtCore.QSize(0, 23))
         font = QtGui.QFont()
         font.setPointSize(10)
         self.cb_trace_view.setFont(font)
@@ -562,7 +573,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.pulse)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
         self.tab_layout_pulse = QtWidgets.QVBoxLayout()
-        self.tab_layout_pulse.setSpacing(0)
+        self.tab_layout_pulse.setSpacing(2)
         self.tab_layout_pulse.setObjectName("tab_layout_pulse")
         self.verticalLayout_4.addLayout(self.tab_layout_pulse)
         self.tabWidget.addTab(self.pulse, "")
@@ -776,7 +787,6 @@ class Ui_MainWindow(object):
         self.radioButton_standard.setText(_translate("MainWindow", "Standard"))
         self.radioButton_y_linked.setText(_translate("MainWindow", "Achse Y Verlinkt"))
         self.radioButton_interpolate.setText(_translate("MainWindow", "Interpolieren"))
-        self.checkBox_pulseLinked.setText(_translate("MainWindow", "Achse Y Verlinkt"))
         self.spinBox_PulseEditPointCount.setSuffix(_translate("MainWindow", " Punkte"))
         self.groupBox_PLC.setTitle(_translate("MainWindow", "Puls Übertragen"))
         self.btn_submit_plc.setText(_translate("MainWindow", "Lade Puls in PLC"))

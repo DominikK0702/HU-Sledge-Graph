@@ -91,6 +91,21 @@ QComboBox QAbstractItemView {
   border-radius: 2px;
   background-color: rgba(230, 230, 230, 0.8);
   selection-background-color: #409bbb;
+}
+QDoubleSpinBox {
+  background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, 
+  stop:0 rgba(230, 230, 230, 0.5), 
+  stop:1 #409bbb);
+  border: 1px solid #32414B;
+  border-radius: 5px;
+}
+
+QSpinBox {
+  background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, 
+  stop:0 rgba(230, 230, 230, 0.5), 
+  stop:1 #409bbb);
+  border: 1px solid #32414B;
+  border-radius: 5px;
 }</string>
   </property>
   <property name="iconSize">
@@ -437,7 +452,7 @@ QComboBox QAbstractItemView {
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>0</height>
+                        <height>23</height>
                        </size>
                       </property>
                       <property name="sizeIncrement">
@@ -522,6 +537,12 @@ QComboBox QAbstractItemView {
                     </item>
                     <item row="0" column="1">
                      <widget class="QDoubleSpinBox" name="doubleSpinBox_scale_factor">
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>23</height>
+                       </size>
+                      </property>
                       <property name="font">
                        <font>
                         <pointsize>10</pointsize>
@@ -605,12 +626,18 @@ QComboBox QAbstractItemView {
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_8">
                   <item>
-                   <layout class="QVBoxLayout" name="verticalLayout_7">
+                   <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,0,1">
+                    <property name="spacing">
+                     <number>6</number>
+                    </property>
                     <property name="leftMargin">
                      <number>7</number>
                     </property>
                     <property name="rightMargin">
                      <number>7</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>10</number>
                     </property>
                     <item>
                      <widget class="QRadioButton" name="radioButton_standard">
@@ -652,26 +679,13 @@ QComboBox QAbstractItemView {
                      </widget>
                     </item>
                     <item>
-                     <widget class="QCheckBox" name="checkBox_pulseLinked">
-                      <property name="font">
-                       <font>
-                        <family>MS Shell Dlg 2</family>
-                        <pointsize>10</pointsize>
-                       </font>
-                      </property>
-                      <property name="layoutDirection">
-                       <enum>Qt::LeftToRight</enum>
-                      </property>
-                      <property name="text">
-                       <string>Achse Y Verlinkt</string>
-                      </property>
-                      <property name="tristate">
-                       <bool>false</bool>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
                      <widget class="QSpinBox" name="spinBox_PulseEditPointCount">
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>23</height>
+                       </size>
+                      </property>
                       <property name="font">
                        <font>
                         <pointsize>10</pointsize>
@@ -893,6 +907,12 @@ QComboBox QAbstractItemView {
                     </property>
                     <item>
                      <widget class="QComboBox" name="cb_trace_view">
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>23</height>
+                       </size>
+                      </property>
                       <property name="font">
                        <font>
                         <pointsize>10</pointsize>
@@ -1194,7 +1214,7 @@ QComboBox QAbstractItemView {
           <item>
            <layout class="QVBoxLayout" name="tab_layout_pulse">
             <property name="spacing">
-             <number>0</number>
+             <number>2</number>
             </property>
            </layout>
           </item>
