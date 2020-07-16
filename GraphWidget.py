@@ -172,7 +172,7 @@ class Graph(pg.PlotWidget):
             self.removeItem(self.bez)
         self.bez = EditCurve(self)
         self.bez.set_point_count(self.mainwindow.spinBox_PulseEditPointCount.value())
-        self.bez.set_linked(self.mainwindow.checkBox_pulseLinked.isChecked())
+        self.bez.set_linked(self.mainwindow.radioButton_y_linked.isChecked())
         self.bez.setDataPoints(self.mainwindow.current_data_x, self.mainwindow.current_data_y, pos)
         self.addItem(self.bez)
 
