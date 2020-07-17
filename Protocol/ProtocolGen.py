@@ -105,13 +105,13 @@ class ProtocolPDF:
         self._space(20)
         self._logo()
         self._space(40)
-        self._trace_plot('Beschleunigung aus Geschwindigkeit:', "", "", self.data['trace_x'],
-                         self.data['trace_acc_vel'])
+        self._trace_plot('Beschleunigung aus Geschwindigkeit:', "Zeit [ms]", "Beschl. [m/s²]", self.data['trace_x'],
+                         [i/60 for i in self.data['trace_acc_vel']])
         self._space(15)
-        self._trace_plot('Beschleunigung aus Geschw. mit Filter:', "", "", self.data['trace_x'],
-                         self.data['trace_acc_vel_filt'])
+        self._trace_plot('Beschleunigung aus Geschw. mit Filter:', "Zeit [ms]", "Beschl. [m/s²]", self.data['trace_x'],
+                         [i/60 for i in self.data['trace_acc_vel_filt']])
         self._space(15)
-        self._trace_plot('Beschleunigung aus Weg:', "", "", self.data['trace_x'], self.data['trace_acc_way'])
+        self._trace_plot('Beschleunigung aus Weg:', "Zeit [ms]", "Beschl. [m/s²]", self.data['trace_x'], self.data['trace_acc_way'])
 
         self.__frame_trace.addFromList(self.__elements, self.__canv)
         self.__canv.showPage()
@@ -121,11 +121,11 @@ class ProtocolPDF:
         self._space(20)
         self._logo()
         self._space(40)
-        self._trace_plot('Weg:', "", "", self.data['trace_x'], self.data['trace_way'])
+        self._trace_plot('Weg:', "Zeit [ms]", "Weg [mm]", self.data['trace_x'], self.data['trace_way'])
         self._space(15)
-        self._trace_plot('Spannung:', "", "", self.data['trace_x'], self.data['trace_voltage'])
+        self._trace_plot('Spannung:', "Zeit [ms]", "Spannung [V]", self.data['trace_x'], self.data['trace_voltage'])
         self._space(15)
-        self._trace_plot('Geschwindigkeit:', "", "", self.data['trace_x'], self.data['trace_vel'])
+        self._trace_plot('Geschwindigkeit:', "Zeit [ms]", "Geschw. [m/s]", self.data['trace_x'], [i/60 for i in self.data['trace_vel']])
         self.__frame_trace.addFromList(self.__elements, self.__canv)
         # Save
         self.__canv.save()
@@ -176,7 +176,7 @@ class ProtocolPDF:
         data = [
             ["Triggernr.", "Name", "Zeit", "Aktiv"] + ["Triggernr.", "Name", "Zeit", "Aktiv"],
             ["01", self.data['trigger']['01']['name'], self.data['trigger']['01']['zeit'],
-             self.data['trigger']['01']['enabled']] + ["-", "-",
+             "Ja" if self.data['trigger']['01']['enabled'] else "Nein" ] + ["-", "-",
                                                        "-",
                                                        "-"],
             ["02", self.data['trigger']['02']['name'], self.data['trigger']['02']['zeit'],
@@ -223,12 +223,14 @@ class ProtocolPDF:
     def _puls_plot(self):
         data_soll_x = self.data['puls_x']
         data_soll_y = self.data['puls_y']
-        data_ist_x = self.data['trace_x']
-        data_ist_y = self.data['trace_acc_vel_filt']
+        puls_ende = data_soll_x[-1] + 71
+        data_ist_x = [i*1000 for i in self.data['trace_x']if i*1000 <= puls_ende]
+        data_ist_y = self.data['trace_acc_vel_filt'][:len(data_ist_x)]
         obj = io.BytesIO()
         fig = plt.figure(num=None, figsize=(10, 5.5))
         plt.plot(data_soll_x, data_soll_y)
-        plt.plot([i * 1000 for i in data_ist_x], [i / 60 for i in data_ist_y])
+        plt.plot([i for i in data_ist_x], [i / 60 for i in data_ist_y])
+        plt.grid(color=(0, 0, 0), alpha=0.2, linestyle='-', linewidth=0.2)
         plt.xlabel('Zeit [ms]')
         plt.ylabel('Beschl. [m/s²]')
         plt.legend()
@@ -240,11 +242,13 @@ class ProtocolPDF:
         self.__elements.append(image)
 
     def _trace_plot(self, title, xlabel, ylabel, x, y):
+
         scale = 0.5
-        data_ist_x = x
-        data_ist_y = y
+        data_ist_x = [i*1000 for i in x if i*1000 <= 260]
+        data_ist_y = y[:len(data_ist_x)]
         obj = io.BytesIO()
         fig = plt.figure(num=None, figsize=(10, 3.8))
+        plt.grid(color=(0, 0, 0), alpha=0.2, linestyle='-', linewidth=0.2)
         plt.plot(data_ist_x, data_ist_y)
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)

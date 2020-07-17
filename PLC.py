@@ -108,6 +108,7 @@ class PLC(QtCore.QThread):
                             right=self.cfg['PLCGRAPH'].getfloat('adjust_right'),
                             hspace=self.cfg['PLCGRAPH'].getfloat('adjust_hspace'),
                             wspace=self.cfg['PLCGRAPH'].getfloat('adjust_wspace'))
+        plt.grid(color=(0,0,0), alpha=0.2, linestyle='-', linewidth=0.2)
         ax = fig.add_subplot()
         ax.set_facecolor('#' + self.bg_color.read())
         ax.set_ylabel(self.bez_y.read())
@@ -116,7 +117,7 @@ class PLC(QtCore.QThread):
         while not done:
             try:
                 ax.plot(
-                    offset_x_soll(soll, 0),
+                    [i*1000 for i in offset_x_soll(soll, 0)],
                     soll,
                     linewidth=self.soll_linewidth.read(),
                     color='#' + self.soll_color.read())
@@ -224,6 +225,7 @@ class PLC(QtCore.QThread):
                             right=self.cfg['PLCGRAPH'].getfloat('adjust_right'),
                             hspace=self.cfg['PLCGRAPH'].getfloat('adjust_hspace'),
                             wspace=self.cfg['PLCGRAPH'].getfloat('adjust_wspace'))
+        plt.grid(color=(0,0,0), alpha=0.2, linestyle='-', linewidth=0.2)
         ax = fig.add_subplot()
         ax.set_facecolor('#' + self.bg_color.read())
         ax.set_ylabel(self.bez_y.read())
