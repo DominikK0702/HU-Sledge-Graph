@@ -24,7 +24,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, config, *args, **kwargs):
         super(GraphMainWindow, self).__init__(*args, **kwargs)
         self.cfg = config
-        self.languageCfg = LanguageConfig(self.cfg['GUI'].get('language_file'), default_language='DE')
+        self.languageCfg = LanguageConfig(self.cfg['GUI'].get('language_file'), default_language='EN')
         self.current_data_x = []
         self.current_data_y = []
         self.compare_data_x = []
@@ -65,6 +65,12 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.tabWidgetTools.setTabText(1, self.languageCfg.get('gui_tab_trace_title'))
         self.tabWidgetTools.setTabText(2, self.languageCfg.get('gui_tab_protocol_title'))
         # Pulse
+        self.groupBox_imexport.setTitle(self.languageCfg.get('gui_box_pulse_imexport'))
+        self.groupBox_Evaluate.setTitle(self.languageCfg.get('gui_box_pulse_evaluate'))
+        self.groupBox_Tools.setTitle(self.languageCfg.get('gui_box_pulse_tools'))
+        self.groupBox_PulsSettings.setTitle(self.languageCfg.get('gui_box_pulse_settings'))
+        self.groupBox_PLC.setTitle(self.languageCfg.get('gui_box_pulse_plc'))
+
         self.btn_load.setText(self.languageCfg.get('gui_btn_pulse_import'))
         self.btn_save.setText(self.languageCfg.get('gui_btn_pulse_export'))
         self.btn_compare.setText(self.languageCfg.get('gui_btn_pulse_compare'))
@@ -80,6 +86,10 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.cb_pulse_view.setItemText(0,self.languageCfg.get('gui_select_pulse_view_single'))
         self.cb_pulse_view.setItemText(1, self.languageCfg.get('gui_select_pulse_view_multi'))
         # Trace
+        self.groupBox_trace_imexport.setTitle(self.languageCfg.get('gui_box_trace_imexport'))
+        self.groupBox_trace_view.setTitle(self.languageCfg.get('gui_box_trace_view'))
+        self.groupBox_trace_axis.setTitle(self.languageCfg.get('gui_box_trace_axis'))
+
         self.btn_trace_loadfile.setText(self.languageCfg.get('gui_btn_trace_load'))
         self.btn_trace_loadlast.setText(self.languageCfg.get('gui_btn_trace_loadlast'))
         self.btn_trace_save.setText(self.languageCfg.get('gui_btn_trace_save'))
@@ -93,6 +103,23 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.cb_trace_ax_acc_way.setText(self.languageCfg.get('gui_cb_trace_ax_acc_way'))
         self.cb_trace_ax_acc_vel.setText(self.languageCfg.get('gui_cb_trace_ax_acc_vel'))
         self.cb_trace_ax_acc_vel_filtered.setText(self.languageCfg.get('gui_cb_trace_ax_acc_vel_filtered'))
+        # Protocol
+        self.groupBox_protocol_import.setTitle(self.languageCfg.get('gui_box_protocol_import'))
+        self.groupBox_protocol_pdf.setTitle(self.languageCfg.get('gui_box_protocol_pdf'))
+
+        self.btn_protocol_import.setText(self.languageCfg.get('gui_btn_protocol_import'))
+        self.btn_protocol_last.setText(self.languageCfg.get('gui_btn_protocol_import_last'))
+        self.btn_protocol_pdfgen.setText(self.languageCfg.get('gui_btn_protocol_generate_pdf'))
+        self.label_protocol_trigger.setText(self.languageCfg.get('gui_title_protocol_trigger'))
+        self.label_protocol_general.setText(self.languageCfg.get('gui_title_protocol_general'))
+        self.tableWidget_general.verticalHeaderItem(0).setText(self.languageCfg.get('gui_protocol_type')+':')
+        self.tableWidget_general.verticalHeaderItem(1).setText(self.languageCfg.get('gui_protocol_nr') + ':')
+        self.tableWidget_general.verticalHeaderItem(2).setText(self.languageCfg.get('gui_protocol_comment') + ':')
+        self.tableWidget_general.verticalHeaderItem(3).setText(self.languageCfg.get('gui_protocol_operator') + ':')
+        self.tableWidget_general.verticalHeaderItem(4).setText(self.languageCfg.get('gui_protocol_start_pos') + ':')
+        self.tableWidget_general.verticalHeaderItem(5).setText(self.languageCfg.get('gui_protocol_end_pos') + ':')
+        self.tableWidget_general.verticalHeaderItem(6).setText(self.languageCfg.get('gui_protocol_load') + ':')
+        self.tableWidget_general.verticalHeaderItem(7).setText(self.languageCfg.get('gui_protocol_timestamp') + ':')
 
 
     def setupWindow(self):

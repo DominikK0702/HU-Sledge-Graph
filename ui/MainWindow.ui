@@ -806,7 +806,7 @@ QSpinBox {
                 <number>4</number>
                </property>
                <item>
-                <widget class="QGroupBox" name="groupBox_Trace">
+                <widget class="QGroupBox" name="groupBox_trace_imexport">
                  <property name="maximumSize">
                   <size>
                    <width>200</width>
@@ -878,7 +878,7 @@ QSpinBox {
                 </widget>
                </item>
                <item>
-                <widget class="QGroupBox" name="groupBox_2">
+                <widget class="QGroupBox" name="groupBox_trace_view">
                  <property name="maximumSize">
                   <size>
                    <width>200</width>
@@ -948,7 +948,7 @@ QSpinBox {
                 </widget>
                </item>
                <item>
-                <widget class="QGroupBox" name="groupBox">
+                <widget class="QGroupBox" name="groupBox_trace_axis">
                  <property name="maximumSize">
                   <size>
                    <width>400</width>
@@ -1076,7 +1076,7 @@ QSpinBox {
              <item>
               <layout class="QHBoxLayout" name="horizontalLayout_12">
                <item>
-                <widget class="QGroupBox" name="groupBox_protocol">
+                <widget class="QGroupBox" name="groupBox_protocol_import">
                  <property name="maximumSize">
                   <size>
                    <width>200</width>
@@ -1133,7 +1133,7 @@ QSpinBox {
                 </widget>
                </item>
                <item>
-                <widget class="QGroupBox" name="groupBox_3">
+                <widget class="QGroupBox" name="groupBox_protocol_pdf">
                  <property name="maximumSize">
                   <size>
                    <width>200</width>
@@ -1264,7 +1264,7 @@ QSpinBox {
                <number>0</number>
               </property>
               <item>
-               <widget class="QLabel" name="label">
+               <widget class="QLabel" name="label_protocol_trigger">
                 <property name="font">
                  <font>
                   <pointsize>18</pointsize>
@@ -1445,7 +1445,7 @@ QSpinBox {
                <number>10</number>
               </property>
               <item>
-               <widget class="QLabel" name="label_2">
+               <widget class="QLabel" name="label_protocol_general">
                 <property name="font">
                  <font>
                   <pointsize>18</pointsize>
