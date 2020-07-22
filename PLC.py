@@ -5,6 +5,7 @@ from PyLcSnap7.PLC import S7Conn
 from PyLcSnap7 import Smarttags
 from TraceHelper import Trace, offset_x_soll
 from Protocol.ProtocolGen import ProtocolJson, ProtocolData
+from loguru import logger
 
 
 class UDT_Trigger:
@@ -80,23 +81,27 @@ class PLC(QtCore.QThread):
 
     def submit_data(self, datay):
         done = False
+        logger.debug('Submitting data to plc')
         while not done:
             try:
                 self.array_soll.write([i * 9.81 for i in datay])
                 self.soll_len.write(len(datay))
                 done = True
+                logger.debug('Data submitted to plc')
             except Exception as e:
-                print(e)
+                logger.error(f'Submitting data to plc canceled: {str(e)}')
 
     def read_soll_ist_data(self):
         done = False
+        logger.debug('Reading compare data from plc')
         while not done:
             try:
                 soll = self.array_soll.read()
                 ist = self.array_ist.read()
                 done = True
+                logger.debug('Done reading compare data from plc')
             except Exception as e:
-                print(e)
+                logger.error(f'Reading data from plc canceled: {str(e)}')
         return soll, ist
 
     def plot_soll(self):
@@ -108,7 +113,7 @@ class PLC(QtCore.QThread):
                             right=self.cfg['PLCGRAPH'].getfloat('adjust_right'),
                             hspace=self.cfg['PLCGRAPH'].getfloat('adjust_hspace'),
                             wspace=self.cfg['PLCGRAPH'].getfloat('adjust_wspace'))
-        plt.grid(color=(0,0,0), alpha=0.2, linestyle='-', linewidth=0.2)
+        plt.grid(color=(0, 0, 0), alpha=0.2, linestyle='-', linewidth=0.2)
         ax = fig.add_subplot()
         ax.set_facecolor('#' + self.bg_color.read())
         ax.set_ylabel(self.bez_y.read())
@@ -117,7 +122,7 @@ class PLC(QtCore.QThread):
         while not done:
             try:
                 ax.plot(
-                    [i*1000 for i in offset_x_soll(soll, 0)],
+                    [i * 1000 for i in offset_x_soll(soll, 0)],
                     soll,
                     linewidth=self.soll_linewidth.read(),
                     color='#' + self.soll_color.read())
@@ -126,9 +131,10 @@ class PLC(QtCore.QThread):
                 print(e)
         fig.savefig(self.var_url_02.read(), dpi=self.dpi)
         fig.savefig(self.var_url_03.read(), dpi=self.dpi)
+        logger.debug('Target plot for plc generated.')
         del (fig)
 
-    def store_json(self,trace,soll_x,soll_data):
+    def store_json(self, trace, soll_x, soll_data):
         store = ProtocolData()
         # Info
         store.data['versuchsnummer'] = self.gdb_versuchsdaten.versuchsnummer.read()
@@ -198,7 +204,7 @@ class PLC(QtCore.QThread):
         jsonObj = ProtocolJson()
         jsonObj.json.data = store.data
         jsonObj.save(self.path_json_export.read())
-
+        logger.debug('Protocol saved.')
 
     def plot_kompl(self):
         filename = get_last_trace(self.cfg['PLC']['ip_cu320'], './export/trace.csv')
@@ -225,7 +231,7 @@ class PLC(QtCore.QThread):
                             right=self.cfg['PLCGRAPH'].getfloat('adjust_right'),
                             hspace=self.cfg['PLCGRAPH'].getfloat('adjust_hspace'),
                             wspace=self.cfg['PLCGRAPH'].getfloat('adjust_wspace'))
-        plt.grid(color=(0,0,0), alpha=0.2, linestyle='-', linewidth=0.2)
+        plt.grid(color=(0, 0, 0), alpha=0.2, linestyle='-', linewidth=0.2)
         ax = fig.add_subplot()
         ax.set_facecolor('#' + self.bg_color.read())
         ax.set_ylabel(self.bez_y.read())
@@ -237,10 +243,10 @@ class PLC(QtCore.QThread):
                 color='#' + self.ist_color.read())
         fig.savefig(self.var_url_02.read(), dpi=self.dpi)
         fig.savefig(self.var_url_03.read(), dpi=self.dpi)
-        self.store_json(trace,soll_x,soll_data)
-        del(ax)
-        del(fig)
-
+        logger.debug('Compare plot for plc generated')
+        self.store_json(trace, soll_x, soll_data)
+        del (ax)
+        del (fig)
 
     def run(self):
         self.parent.statusbar.showMessage(self.cfg['STRINGS']['status_plc_connecting'])

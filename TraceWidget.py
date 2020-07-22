@@ -1,7 +1,7 @@
 import pyqtgraph as pg
 from TraceHelper import Trace
 from PIL import ImageColor
-#from scipy import spatial
+
 
 class TraceAxis:
     def __init__(self, traceplot, axisname):
@@ -70,6 +70,7 @@ class TracePlot(pg.GraphicsLayoutWidget):
             break
 
     def change_axis(self):
+        # return if there is no activle plot
         if not self.plot_active:
             return
 
@@ -81,7 +82,7 @@ class TracePlot(pg.GraphicsLayoutWidget):
 
         row = 1
         if self.mainwindow.cb_trace_ax_way.isChecked():
-            trace_axis = TraceAxis(self, self.cfg['GRAPHTRACE']['label_axis_way'])
+            trace_axis = TraceAxis(self, self.mainwindow.languageCfg.get('trace_axis_label_way'))
             trace_axis.addPlot(row, 0)
             trace_axis.set_pen(self.cfg['GRAPHTRACE']['color_axis_way'], self.cfg['GRAPHTRACE']['width_axis_way'], )
             self.active_axis.append(trace_axis)
@@ -91,7 +92,7 @@ class TracePlot(pg.GraphicsLayoutWidget):
                 return self.plot()
 
         if self.mainwindow.cb_trace_ax_vel.isChecked():
-            trace_axis = TraceAxis(self, self.cfg['GRAPHTRACE']['label_axis_velocity'])
+            trace_axis = TraceAxis(self, self.mainwindow.languageCfg.get('trace_axis_label_velocity'))
             trace_axis.addPlot(row, 0)
             trace_axis.set_pen(self.cfg['GRAPHTRACE']['color_axis_velocity'],
                                self.cfg['GRAPHTRACE']['width_axis_velocity'], )
@@ -102,7 +103,7 @@ class TracePlot(pg.GraphicsLayoutWidget):
                 return self.plot()
 
         if self.mainwindow.cb_trace_ax_voltage.isChecked():
-            trace_axis = TraceAxis(self, self.cfg['GRAPHTRACE']['label_axis_voltage'])
+            trace_axis = TraceAxis(self, self.mainwindow.languageCfg.get('trace_axis_label_voltage'))
             trace_axis.addPlot(row, 0)
             trace_axis.set_pen(self.cfg['GRAPHTRACE']['color_axis_voltage'],
                                self.cfg['GRAPHTRACE']['width_axis_voltage'], )
@@ -113,7 +114,7 @@ class TracePlot(pg.GraphicsLayoutWidget):
                 return self.plot()
 
         if self.mainwindow.cb_trace_ax_acc_way.isChecked():
-            trace_axis = TraceAxis(self, self.cfg['GRAPHTRACE']['label_axis_acc_way'])
+            trace_axis = TraceAxis(self, self.mainwindow.languageCfg.get('trace_axis_label_acc_way'))
             trace_axis.addPlot(row, 0)
             trace_axis.set_pen(self.cfg['GRAPHTRACE']['color_axis_acc_way'],
                                self.cfg['GRAPHTRACE']['width_axis_acc_way'], )
@@ -124,7 +125,7 @@ class TracePlot(pg.GraphicsLayoutWidget):
                 return self.plot()
 
         if self.mainwindow.cb_trace_ax_acc_vel.isChecked():
-            trace_axis = TraceAxis(self, self.cfg['GRAPHTRACE']['label_axis_acc_vel'])
+            trace_axis = TraceAxis(self, self.mainwindow.languageCfg.get('trace_axis_label_acc_vel'))
             trace_axis.addPlot(row, 0)
             trace_axis.set_pen(self.cfg['GRAPHTRACE']['color_axis_acc_vel'],
                                self.cfg['GRAPHTRACE']['width_axis_acc_vel'], )
@@ -135,7 +136,7 @@ class TracePlot(pg.GraphicsLayoutWidget):
                 return self.plot()
 
         if self.mainwindow.cb_trace_ax_acc_vel_filtered.isChecked():
-            trace_axis = TraceAxis(self, self.cfg['GRAPHTRACE']['label_axis_acc_vel_filtered'])
+            trace_axis = TraceAxis(self, self.mainwindow.languageCfg.get('trace_axis_label_acc_vel_filtered'))
             trace_axis.addPlot(row, 0)
             trace_axis.set_pen(self.cfg['GRAPHTRACE']['color_axis_acc_vel_filtered'],
                                self.cfg['GRAPHTRACE']['width_axis_acc_vel_filtered'], )
@@ -163,11 +164,6 @@ class TracePlot(pg.GraphicsLayoutWidget):
         self.trace.load_trace_from_protocol(protocol)
         self.plot_active = True
         self.change_axis()
-
-    def autoRange(self):
-        #if self.plot_active:
-        #   self.ax_.axis.autoRange()
-        pass
 
     def set_viewmode(self):
         index = self.mainwindow.cb_trace_view.currentIndex()
@@ -233,23 +229,23 @@ class TracePlot(pg.GraphicsLayoutWidget):
                         width=self.cfg['GRAPHTRACE'].getint('width_axis_acc_vel_filtered')
                     ))
 
-            if ax.name == self.cfg['GRAPHTRACE']['label_axis_way']:
+            if ax.name == self.mainwindow.languageCfg.get('trace_axis_label_way'):
                 ax.plot(self.trace.get_axis_time(), self.trace.get_axis_way())
 
-            elif ax.name == self.cfg['GRAPHTRACE']['label_axis_velocity']:
+            elif ax.name == self.mainwindow.languageCfg.get('trace_axis_label_velocity'):
                 ax.plot(self.trace.get_axis_time(), self.trace.get_axis_velocity())
 
-            elif ax.name == self.cfg['GRAPHTRACE']['label_axis_voltage']:
+            elif ax.name == self.mainwindow.languageCfg.get('trace_axis_label_voltage'):
                 ax.plot(self.trace.get_axis_time(), self.trace.get_axis_voltage())
 
-            elif ax.name == self.cfg['GRAPHTRACE']['label_axis_acc_way']:
+            elif ax.name == self.mainwindow.languageCfg.get('trace_axis_label_acc_way'):
                 ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acceleration())
 
-            elif ax.name == self.cfg['GRAPHTRACE']['label_axis_acc_vel']:
+            elif ax.name == self.mainwindow.languageCfg.get('trace_axis_label_acc_vel'):
                 ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acc_from_speed())
 
-            elif ax.name == self.cfg['GRAPHTRACE']['label_axis_acc_vel_filtered']:
+            elif ax.name == self.mainwindow.languageCfg.get('trace_axis_label_acc_vel_filtered'):
                 ax.plot(self.trace.get_axis_time(), self.trace.get_axis_acc_from_speed(filtered=True))
 
         self.mainwindow.tabWidget.setCurrentIndex(1)
-        self.autoRange()
+        self.autorange()

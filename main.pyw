@@ -16,11 +16,15 @@ from TraceWidget import TracePlot
 import pyqtgraph as pg
 import TraceHelper
 from Protocol import ProtocolGen
+from LangConfig import LanguageConfig
+from loguru import logger
 
 
 class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, config, *args, **kwargs):
         super(GraphMainWindow, self).__init__(*args, **kwargs)
+        self.cfg = config
+        self.languageCfg = LanguageConfig(self.cfg['GUI'].get('language_file'), default_language='DE')
         self.current_data_x = []
         self.current_data_y = []
         self.compare_data_x = []
@@ -29,10 +33,8 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.edit_mode = False
         self.current_file_name = ''
         self.current_trace = TraceHelper.Trace()
-
         self.compare_trace = TraceHelper.Trace()
         self.current_protocol = None
-        self.cfg = config
 
         self.setupUi(self)
         self.setupWindow()
@@ -53,11 +55,51 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                                     width=self.cfg['GRAPH'].getint('width_current'))
         self.show()
 
-    def setupWindow(self):
-        self.setWindowIcon(QtGui.QIcon(self.cfg['GUI']['window_icon']))
-        self.setWindowTitle(self.cfg['GUI']['title'])
-        self.logo.setPixmap(QtGui.QPixmap(self.cfg['GUI']['logo']))
+    def setupStrings(self):
+        # Tab Widget View
+        self.tabWidget.setTabText(0, self.languageCfg.get('gui_tab_pulse_title'))
+        self.tabWidget.setTabText(1, self.languageCfg.get('gui_tab_trace_title'))
+        self.tabWidget.setTabText(2, self.languageCfg.get('gui_tab_protocol_title'))
+        # Tab Widget Tools
+        self.tabWidgetTools.setTabText(0, self.languageCfg.get('gui_tab_pulse_title'))
+        self.tabWidgetTools.setTabText(1, self.languageCfg.get('gui_tab_trace_title'))
+        self.tabWidgetTools.setTabText(2, self.languageCfg.get('gui_tab_protocol_title'))
+        # Pulse
+        self.btn_load.setText(self.languageCfg.get('gui_btn_pulse_import'))
+        self.btn_save.setText(self.languageCfg.get('gui_btn_pulse_export'))
+        self.btn_compare.setText(self.languageCfg.get('gui_btn_pulse_compare'))
+        self.btn_tool_cursor.setText(self.languageCfg.get('gui_btn_pulse_cursor'))
+        self.btn_tool_edit.setText(self.languageCfg.get('gui_btn_pulse_edit'))
+        self.btn_tool_scale.setText(self.languageCfg.get('gui_btn_pulse_scale'))
+        self.radioButton_standard.setText(self.languageCfg.get('gui_rb_pulse_setting_default'))
+        self.radioButton_y_linked.setText(self.languageCfg.get('gui_rb_pulse_setting_y_linked'))
+        self.radioButton_interpolate.setText(self.languageCfg.get('gui_rb_pulse_setting_interpolate'))
+        self.spinBox_PulseEditPointCount.setSuffix(' ' + self.languageCfg.get('gui_spinbox_pulse_editpointcount_suffix'))
+        self.btn_submit_plc.setText(self.languageCfg.get('gui_btn_pulse_submit_plc'))
+        self.btn_autorange.setText(self.languageCfg.get('gui_btn_pulse_autorange'))
+        self.cb_pulse_view.setItemText(0,self.languageCfg.get('gui_select_pulse_view_single'))
+        self.cb_pulse_view.setItemText(1, self.languageCfg.get('gui_select_pulse_view_multi'))
+        # Trace
+        self.btn_trace_loadfile.setText(self.languageCfg.get('gui_btn_trace_load'))
+        self.btn_trace_loadlast.setText(self.languageCfg.get('gui_btn_trace_loadlast'))
+        self.btn_trace_save.setText(self.languageCfg.get('gui_btn_trace_save'))
+        self.btn_trace_autorange.setText(self.languageCfg.get('gui_btn_trace_autorange'))
+        self.cb_pulse_view.setItemText(0, self.languageCfg.get('gui_cb_trace_view_multi'))
+        self.cb_pulse_view.setItemText(1, self.languageCfg.get('gui_cb_trace_view_single'))
 
+        self.cb_trace_ax_way.setText(self.languageCfg.get('gui_cb_trace_ax_way'))
+        self.cb_trace_ax_vel.setText(self.languageCfg.get('gui_cb_trace_ax_velocity'))
+        self.cb_trace_ax_voltage.setText(self.languageCfg.get('gui_cb_trace_ax_voltage'))
+        self.cb_trace_ax_acc_way.setText(self.languageCfg.get('gui_cb_trace_ax_acc_way'))
+        self.cb_trace_ax_acc_vel.setText(self.languageCfg.get('gui_cb_trace_ax_acc_vel'))
+        self.cb_trace_ax_acc_vel_filtered.setText(self.languageCfg.get('gui_cb_trace_ax_acc_vel_filtered'))
+
+
+    def setupWindow(self):
+        self.setupStrings()
+        self.setWindowIcon(QtGui.QIcon(self.cfg['GUI']['window_icon']))
+        self.setWindowTitle(self.languageCfg.get('title'))
+        self.logo.setPixmap(QtGui.QPixmap(self.cfg['GUI']['logo']))
         self.monitor = QDesktopWidget().screenGeometry(self.cfg['GUI'].getint('monitor_nr'))
         self.move(self.monitor.left(), self.monitor.top())
         if self.cfg['GUI'].getboolean('always_top'): self.setWindowFlag(QtCore.Qt.WindowStaysOnTopHint)
@@ -81,7 +123,6 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_trace_loadlast.clicked.connect(self.handle_btn_trace_loadlast)
         self.btn_trace_save.clicked.connect(self.handle_btn_trace_save)
         self.btn_autorange.clicked.connect(self.graph.auto_range)
-
         self.btn_protocol_last.clicked.connect(self.handle_load_last_protocol)
         self.btn_protocol_import.clicked.connect(self.handle_load_protocol)
         self.btn_protocol_pdfgen.clicked.connect(self.handle_generate_pdf_protocol)
@@ -95,7 +136,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         if factor == 1.0:
             return
         for index, i in enumerate(self.current_data_y):
-            self.current_data_y[index] = i*factor
+            self.current_data_y[index] = i * factor
 
         self.btn_tool_edit.setChecked(False)
         self.btn_tool_cursor.setChecked(False)
@@ -103,7 +144,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.graph.clear()
 
         self.graph.plot(self.current_data_x, self.current_data_y, pen=self.pen_current,
-                        name=self.cfg['STRINGS']['graph_current_label'])
+                        name=self.languageCfg.get('graph_current_label'))
         self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
 
         self.graph.enableAutoRange(x=True, y=True)
@@ -117,17 +158,17 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.tableWidget_general.setItem(4, 0, QTableWidgetItem(str(protocol.json.data['startpos']) + ' mm'))
         self.tableWidget_general.setItem(5, 0, QTableWidgetItem(str(protocol.json.data['endpos']) + ' mm'))
         self.tableWidget_general.setItem(6, 0, QTableWidgetItem(str(protocol.json.data['zuladung']) + ' kg'))
-        timestamp = "Alte File Version"
+
         try:
             timestamp = str(protocol.json.data['timestamp'])
         except Exception as e:
-            pass
+            timestamp = "Outdated File Version"
         self.tableWidget_general.setItem(7, 0, QTableWidgetItem(timestamp))
 
         # triggers
         for index, trig in enumerate(protocol.json.data['trigger'].items()):
             self.tableWidget_trigger.setItem(index, 0, QTableWidgetItem(trig[1]['name']))
-            self.tableWidget_trigger.setItem(index, 1, QTableWidgetItem(str(trig[1]['zeit']/1e6) + ' ms'))
+            self.tableWidget_trigger.setItem(index, 1, QTableWidgetItem(str(trig[1]['zeit'] / 1e6) + ' ms'))
             self.tableWidget_trigger.setItem(index, 2, QTableWidgetItem(str(trig[1]['enabled'])))
 
         self.trace_plot.load_trace_protocol(protocol)
@@ -135,7 +176,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_tool_edit.setChecked(False)
         self.btn_tool_cursor.setChecked(False)
         self.graph.clear()
-        self.graph.setTitle('Protokoll')
+        self.graph.setTitle(self.languageCfg.get('prototcol_pulse_title'))
 
         # Plot Soll
         offset_soll = 50
@@ -182,11 +223,11 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def handle_load_last_protocol(self):
         # todo enable path from plc
         path = self.plc.path_json_export.read()
-        #path = ''
+        # path = ''
         if path == '':
             path = "./export/protocols"
 
-        filename = max(glob.glob(path+'/*'), key=os.path.getmtime)
+        filename = max(glob.glob(path + '/*'), key=os.path.getmtime)
         if filename:
             protocol = ProtocolGen.ProtocolJson()
             protocol.load(filename)
@@ -322,30 +363,43 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def handle_btn_trace_loadlast(self):
         try:
             self.trace_plot.load_trace_csv('./export/trace.csv')
-            self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_last_loaded'])
+            self.statusbar.showMessage(self.languageCfg.get('status_trace_last_loaded'))
+            logger.debug("Latest Tracefile loaded.")
         except Exception as e:
-            self.statusbar.showMessage(str(e))
+            logger.debug("Loading latest Tracefile failed.")
+            self.statusbar.showMessage(self.languageCfg.get('status_trace_last_load_error'), str(e))
 
     def handle_btn_trace_save(self):
         if self.trace_plot.trace.datapoints <= 0:
+            logger.debug(f"Trace not Saved. No datapoints aviable: {self.trace_plot.trace.datapoints}")
             return
         options = QFileDialog.Options()
         if not self.cfg['GUI'].getboolean('use_native_filedialog'):
             options |= QFileDialog.DontUseNativeDialog
-        fileName, fileType = QFileDialog.getSaveFileName(self, self.cfg['STRINGS']['trace_save_title'], "",
+        fileName, fileType = QFileDialog.getSaveFileName(self,
+                                                         self.languageCfg.get('trace_save_title'),
+                                                         self.cfg['GUI']['dir_save_trace'],
                                                          "Trace CSV (*.tcsv)",
                                                          options=options)
         if fileName:
             try:
                 self.trace_plot.trace.save_to_csv(fileName, withaccfromspeed=True)
-                self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_saved'])
+                self.statusbar.showMessage(self.languageCfg.get('status_trace_saved'))
+                logger.debug(f"Trace file saved: {fileName}")
             except Exception as e:
-                self.statusbar.showMessage(str(e))
+                logger.error(f"Failed to save trace file: {fileName}")
+                self.statusbar.showMessage(self.languageCfg.get('status_trace_save_error'), str(e))
 
 
-if __name__ == '__main__':
+def main():
+    logger.debug('Programm started')
     config = ConfigParser()
     config.read('config.ini', encoding='utf-8')
+    logger.debug('Config loaded')
     app = QApplication(sys.argv)
     gui = GraphMainWindow(config)
     sys.exit(app.exec())
+
+
+if __name__ == '__main__':
+    main()
