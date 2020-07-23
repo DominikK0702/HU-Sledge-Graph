@@ -20,6 +20,10 @@ from LangConfig import LanguageConfig
 from loguru import logger
 
 
+# todo Pulse Evaluate switch viewmode
+
+
+
 class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, config, *args, **kwargs):
         super(GraphMainWindow, self).__init__(*args, **kwargs)
@@ -161,20 +165,24 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def handle_scale(self):
         factor = self.doubleSpinBox_scale_factor.value()
         if factor == 1.0:
+            logger.debug("Scale Pulse canceled because x1.0 doesnt do anything")
             return
-        for index, i in enumerate(self.current_data_y):
-            self.current_data_y[index] = i * factor
+        else:
+            if len(self.current_data_y) <= 0:
+                logger.debug("Scale Pulse canceled because no data to scale")
+                return
+            for index, i in enumerate(self.current_data_y):
+                self.current_data_y[index] = i * factor
 
-        self.btn_tool_edit.setChecked(False)
-        self.btn_tool_cursor.setChecked(False)
-        self.graph.cursor.enabled(False)
-        self.graph.clear()
+            self.reset_tools()
+            self.graph.clear()
 
-        self.graph.plot(self.current_data_x, self.current_data_y, pen=self.pen_current,
-                        name=self.languageCfg.get('graph_current_label'))
-        self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
+            self.graph.plot(self.current_data_x, self.current_data_y, pen=self.pen_current,
+                            name=self.languageCfg.get('graph_current_label'))
+            self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
 
-        self.graph.enableAutoRange(x=True, y=True)
+            self.graph.enableAutoRange(x=True, y=True)
+            logger.debug(f"Scaled Pulse to x{factor}")
 
     def draw_protocol(self, protocol):
         # general
@@ -189,6 +197,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         try:
             timestamp = str(protocol.json.data['timestamp'])
         except Exception as e:
+            logger.debug("Protocol: using outdated file version (still supported but timestamp is missing)")
             timestamp = "Outdated File Version"
         self.tableWidget_general.setItem(7, 0, QTableWidgetItem(timestamp))
 
@@ -200,8 +209,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
 
         self.trace_plot.load_trace_protocol(protocol)
 
-        self.btn_tool_edit.setChecked(False)
-        self.btn_tool_cursor.setChecked(False)
+        self.reset_tools()
         self.graph.clear()
         self.graph.setTitle(self.languageCfg.get('prototcol_pulse_title'))
 
@@ -212,16 +220,11 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.graph.plot(soll_x,
                         scaled_soll_data,
                         pen=self.graph.pen_soll, name=self.cfg['STRINGS']['graph_soll_label'])
-        cut_trace = True
         pulsdauer = soll_x[-1] + 50
-        ist_x = []
-        ist_y = []
-        if cut_trace:
-            ist_x = [i * 1000 for i in self.trace_plot.trace.get_axis_time() if i * 1000 <= pulsdauer]
-            ist_y = [i / 60 for i in self.trace_plot.trace.get_axis_acc_from_speed(filtered=True)[:len(ist_x)]]
-        else:
-            ist_x = [i * 1000 for i in self.trace_plot.trace.get_axis_time()]
-            ist_y = [i / 60 for i in self.trace_plot.trace.get_axis_acc_from_speed(filtered=True)]
+
+        ist_x = [i * 1000 for i in self.trace_plot.trace.get_axis_time() if i * 1000 <= pulsdauer]
+        ist_y = [i / 60 for i in self.trace_plot.trace.get_axis_acc_from_speed(filtered=True)[:len(ist_x)]]
+
         # Plot Ist
         self.graph.plot(ist_x, ist_y,
                         pen=self.graph.pen_ist, name=self.cfg['STRINGS']['graph_ist_label'])
@@ -230,8 +233,8 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.graph.setXLabel(self.cfg['GRAPH']['name_ax_compare_x'])
         self.graph.setYLabel(self.cfg['GRAPH']['name_ax_compare_y'])
         self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
-
         self.tabWidget.setCurrentIndex(2)
+        logger.debug("Protocoll loaded.")
 
     def handle_generate_pdf_protocol(self):
         if self.current_protocol:
@@ -243,8 +246,10 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                                                              options=options)
             if fileName:
                 pdf = ProtocolGen.ProtocolPDF(fileName, self.current_protocol.json)
-                self.statusbar.showMessage('Protokoll PDF zu erstellt.')
+                logger.debug(f"Protocol pdf generated: {fileName}")
+                self.statusbar.showMessage('Protokoll PDF erstellt.')
         else:
+            logger.debug("No protocol to generate pdf.")
             self.statusbar.showMessage('Kein Protokoll geladen um PDF zu erstellen.')
 
     def handle_load_last_protocol(self):
@@ -253,6 +258,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         # path = ''
         if path == '':
             path = "./export/protocols"
+            logger.debug(f"'No path for protocol load from plc. Falling back to default: {path}")
 
         filename = max(glob.glob(path + '/*'), key=os.path.getmtime)
         if filename:
@@ -260,8 +266,10 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             protocol.load(filename)
             self.current_protocol = protocol
             self.draw_protocol(self.current_protocol)
+            logger.debug("Latest protocol loaded.")
             self.statusbar.showMessage('Protokoll des letzten Versuchs geladen.')
         else:
+            logger.error("Loading latest protocol failed.")
             self.statusbar.showMessage('Protokoll des letzten Versuchs laden gescheitert.')
 
     def handle_load_protocol(self):
@@ -276,6 +284,9 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             protocol.load(fileName)
             self.current_protocol = protocol
             self.draw_protocol(self.current_protocol)
+            logger.debug(f"Protocol loaded from file: {fileName}")
+        else:
+            logger.debug("Load protocol: no filename defined")
 
     def show_dialoginfo(self):
         self.info_dialog = QMainWindow(self)
@@ -283,6 +294,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.info_ui.setupUi(self.info_dialog)
         self.info_ui.label.setPixmap(QtGui.QPixmap('./assets/logo.png'))
         self.info_dialog.show()
+        logger.debug("Infodialog displayed.")
 
     def handle_btn_load(self):
         options = QFileDialog.Options()
@@ -314,8 +326,12 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                 self.graph.enableAutoRange(x=True, y=True)
                 self.graph.setTitle(fileName.split('/')[-1])
                 self.current_file_name = fileName.split('/')[-1]
+                logger.debug(f"Pulse file loaded: {self.current_file_name}")
             except Exception as e:
+                logger.error(f"Loading pulse failed: {str(e)}")
                 self.statusbar.showMessage(str(e))
+        else:
+            logger.debug("Pulse load: no filename defined")
 
     def handle_btn_save(self):
         options = QFileDialog.Options()
@@ -332,21 +348,33 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                     writer.writerow(
                         [format(x[count], f'.{self.cfg["GRAPH"]["csv_export_float_precision_x"]}f'),
                          format(i, f'.{self.cfg["GRAPH"]["csv_export_float_precision_y"]}f')])
-
+            logger.debug(f"Pulse saved: {fileName}")
             self.statusbar.showMessage(self.cfg['STRINGS']['status_csv_saved'])
+
+        else:
+            logger.info("Save pulse: no filename defined")
 
     def handle_btn_compare(self):
         filename = get_last_trace(self.cfg['PLC']['ip_cu320'], './export/trace.csv')
         if not filename:
+            logger.error("Connection to sinamics controller failed.")
             return self.statusbar.showMessage(self.cfg['STRINGS']['status_trace_connnection_error'])
         self.compare_trace.load_trace_csv(filename)
-        self.compare_soll_data_y = self.plc.array_soll.read()
+        done = False
+        while not done:
+            try:
+                self.compare_soll_data_y = self.plc.array_soll.read()
+                done = True
+            except Exception as e:
+                logger.error(f"Handle btn compare {str(e)}")
+
         self.reset_tools()
         self.graph.clear()
         self.graph.setTitle(self.cfg['STRINGS']['graph_title_compare'])
         self.current_data_x = []
         self.current_data_y = []
         self.graph.plot_compare(self.compare_trace, self.compare_soll_data_y)
+        logger.debug("Compare target-actual success.")
         self.statusbar.showMessage(self.cfg['STRINGS']['status_plc_data_loaded'])
 
     def handle_btn_tool_cursor(self):
@@ -371,7 +399,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                 self.plc.anf_submit_data.write(True)
                 done = True
             except Exception as e:
-                print(e)
+                logger.info(f"Request to submit pulse to plc: {str(e)}")
 
     def handle_btn_trace_loadfile(self):
         options = QFileDialog.Options()

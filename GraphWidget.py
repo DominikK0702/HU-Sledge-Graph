@@ -5,6 +5,7 @@ from bisect import bisect_left
 from scipy.signal import savgol_filter
 from TraceHelper import offset_x_soll
 from scipy import interpolate
+from loguru import logger
 
 
 def take_closest(array, value):
@@ -61,7 +62,11 @@ class EditCurve(pg.PolyLineROI):
             elif self.mode_interpolate:
                 x = [self.handles[0]['pos'].x(),x,self.handles[-1]['pos'].x(),self.handles[-1]['pos'].x()+0.0001]
                 y = [self.handles[0]['pos'].y(),y,self.handles[-1]['pos'].y(),self.handles[-1]['pos'].y()]
-                f = interpolate.interp1d(x, y, kind='cubic')
+                try:
+                    f = interpolate.interp1d(x, y, kind='cubic')
+                except:
+                    logger.error("Drag Pulse Interpolate canceled")
+                    return
                 intp = [f(i['pos'].x()) for i in self.handles]
                 for cnt, i in enumerate(intp):
                     self.drawer.mainwindow.current_data_y[self.index - (self.points_count // 2) + cnt] = float(i)
