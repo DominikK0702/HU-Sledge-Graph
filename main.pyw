@@ -10,6 +10,7 @@ from PyQt5 import QtGui
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget, QTableWidgetItem
 from MainWindow import Ui_MainWindow
 from InfoDialog import Ui_InfoDialog
+from QtInfo import Ui_Form
 from PLC import PLC
 from GraphWidget import Graph
 from TraceWidget import TracePlot
@@ -161,6 +162,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_tool_scale.clicked.connect(self.handle_scale)
 
         self.actionInfo.triggered.connect(self.show_dialoginfo)
+        self.actionAbout_Qt.triggered.connect(self.show_qtinfo)
 
     def handle_scale(self):
         factor = self.doubleSpinBox_scale_factor.value()
@@ -295,6 +297,13 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.info_ui.label.setPixmap(QtGui.QPixmap('./assets/logo.png'))
         self.info_dialog.show()
         logger.debug("Infodialog displayed.")
+
+    def show_qtinfo(self):
+        self.qtinfo = QMainWindow(self)
+        self.qtinfo_ui = Ui_Form()
+        self.qtinfo_ui.setupUi(self.qtinfo)
+        self.qtinfo_ui.label.setPixmap(QtGui.QPixmap('./assets/qt.png'))
+        self.qtinfo.show()
 
     def handle_btn_load(self):
         options = QFileDialog.Options()

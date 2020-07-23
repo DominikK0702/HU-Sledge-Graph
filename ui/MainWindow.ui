@@ -1593,7 +1593,7 @@ QSpinBox {
      <x>0</x>
      <y>0</y>
      <width>1342</width>
-     <height>18</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="defaultUp">
@@ -1610,6 +1610,7 @@ QSpinBox {
      <string>Help</string>
     </property>
     <addaction name="actionInfo"/>
+    <addaction name="actionAbout_Qt"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuInfo"/>
@@ -1641,6 +1642,11 @@ QSpinBox {
    </property>
    <property name="text">
     <string>Info</string>
+   </property>
+  </action>
+  <action name="actionAbout_Qt">
+   <property name="text">
+    <string>About Qt</string>
    </property>
   </action>
  </widget>
