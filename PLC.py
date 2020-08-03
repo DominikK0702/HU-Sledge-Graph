@@ -128,7 +128,7 @@ class PLC(QtCore.QThread):
                     color='#' + self.soll_color.read())
                 done = True
             except Exception as e:
-                print(e)
+                logger.error(str(e))
         fig.savefig(self.var_url_02.read(), dpi=self.dpi)
         fig.savefig(self.var_url_03.read(), dpi=self.dpi)
         logger.debug('Target plot for plc generated.')
@@ -276,9 +276,10 @@ class PLC(QtCore.QThread):
                                     self.plot_done_soll.write(True)
                                     done = True
                                 except Exception as e:
-                                    print(e)
+                                    logger.error(str(e))
                         else:
                             self.parent.statusbar.showMessage(self.cfg['STRINGS']['status_plc_data_submit_error'])
+                            logger.info("Target pulse request active. No pulse data to submit to plc")
 
                     elif self.anf_kompl.read():
                         self.plot_kompl()

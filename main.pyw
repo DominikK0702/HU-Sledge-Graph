@@ -10,7 +10,7 @@ from PyQt5 import QtGui
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget, QTableWidgetItem
 from MainWindow import Ui_MainWindow
 from InfoDialog import Ui_InfoDialog
-from QtInfo import Ui_Form
+from QtInfo import Ui_QtInfo
 from PLC import PLC
 from GraphWidget import Graph
 from TraceWidget import TracePlot
@@ -19,6 +19,7 @@ import TraceHelper
 from Protocol import ProtocolGen
 from LangConfig import LanguageConfig
 from loguru import logger
+
 
 
 # todo Pulse Evaluate switch viewmode
@@ -255,7 +256,6 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.statusbar.showMessage('Kein Protokoll geladen um PDF zu erstellen.')
 
     def handle_load_last_protocol(self):
-        # todo enable path from plc
         path = self.plc.path_json_export.read()
         # path = ''
         if path == '':
@@ -268,6 +268,8 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             protocol.load(filename)
             self.current_protocol = protocol
             self.draw_protocol(self.current_protocol)
+            self.graph.compare_mode = True
+            self.graph.pulse_mode = False
             logger.debug("Latest protocol loaded.")
             self.statusbar.showMessage('Protokoll des letzten Versuchs geladen.')
         else:
@@ -286,6 +288,8 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             protocol.load(fileName)
             self.current_protocol = protocol
             self.draw_protocol(self.current_protocol)
+            self.graph.compare_mode = True
+            self.graph.pulse_mode = False
             logger.debug(f"Protocol loaded from file: {fileName}")
         else:
             logger.debug("Load protocol: no filename defined")
@@ -300,7 +304,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
 
     def show_qtinfo(self):
         self.qtinfo = QMainWindow(self)
-        self.qtinfo_ui = Ui_Form()
+        self.qtinfo_ui = Ui_QtInfo()
         self.qtinfo_ui.setupUi(self.qtinfo)
         self.qtinfo_ui.label.setPixmap(QtGui.QPixmap('./assets/qt.png'))
         self.qtinfo.show()
@@ -323,9 +327,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                         self.current_data_y.append(float(row[1].replace(',', '.')))
 
                 self.statusbar.showMessage(self.cfg['STRINGS']['status_csv_loaded'])
-                self.btn_tool_edit.setChecked(False)
-                self.btn_tool_cursor.setChecked(False)
-                self.graph.cursor.enabled(False)
+                self.reset_tools()
                 self.graph.clear()
 
                 self.graph.plot(self.current_data_x, self.current_data_y, pen=self.pen_current,
@@ -334,6 +336,8 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
 
                 self.graph.enableAutoRange(x=True, y=True)
                 self.graph.setTitle(fileName.split('/')[-1])
+                self.graph.compare_mode = False
+                self.graph.pulse_mode = True
                 self.current_file_name = fileName.split('/')[-1]
                 logger.debug(f"Pulse file loaded: {self.current_file_name}")
             except Exception as e:

@@ -137,6 +137,9 @@ class Graph(pg.PlotWidget):
         self.cfg = cfg
         self.mainwindow = mainwindow
         super(Graph, self).__init__()
+        self.view_mode = 0
+        self.compare_mode = False
+        self.pulse_mode = False
         self.edit_mode = False
         self.current_mouse_pos = None
         self.bez = None
@@ -166,7 +169,17 @@ class Graph(pg.PlotWidget):
 
     def view_changed(self):
         # todo Untereinander Überlappend
-        print(1)
+        self.view_mode = self.mainwindow.cb_pulse_view.currentIndex()
+        if self.compare_mode:
+            # from protocol
+
+            x_target = [i*1000 for i in offset_x_soll(self.mainwindow.current_protocol.json.data['puls_x'],50)]
+            y_target = self.mainwindow.current_protocol.json.data['puls_y']
+            x_actual = [i*1000 for i in self.mainwindow.current_protocol.json.data['trace_x']]
+            y_actual = [i/60 for i in self.mainwindow.current_protocol.json.data['trace_acc_vel_filt']]
+            self.clear()
+            self.plot(x_target,y_target,pen=self.pen_soll,row=0,col=0)
+            self.plot(x_actual, y_actual, pen=self.pen_ist, row=1, col=0)
 
     def auto_range(self):
         self.autoRange()
@@ -215,16 +228,11 @@ class Graph(pg.PlotWidget):
                   pen=self.pen_soll, name=self.cfg['STRINGS']['graph_soll_label'])
 
 
-        cut_trace = True
+
         pulsdauer = soll_x[-1] + 50
-        ist_x = []
-        ist_y = []
-        if cut_trace:
-            ist_x = [i * 1000 for i in trace.get_axis_time() if i*1000 <= pulsdauer]
-            ist_y = [i/60 for i in trace.get_axis_acc_from_speed(filtered=True)[:len(ist_x)]]
-        else:
-            ist_x = [i * 1000 for i in trace.get_axis_time()]
-            ist_y = [i/60 for i in trace.get_axis_acc_from_speed(filtered=True)]
+        ist_x = [i * 1000 for i in trace.get_axis_time() if i*1000 <= pulsdauer]
+        ist_y = [i/60 for i in trace.get_axis_acc_from_speed(filtered=True)[:len(ist_x)]]
+
         # Plot Ist
         self.plot(ist_x, ist_y,
                   pen=self.pen_ist, name=self.cfg['STRINGS']['graph_ist_label'])
@@ -234,3 +242,5 @@ class Graph(pg.PlotWidget):
         self.setXLabel(self.cfg['GRAPH']['name_ax_compare_x'])
         self.setYLabel(self.cfg['GRAPH']['name_ax_compare_y'])
         self.getPlotItem().legend.setPen(self.pen_legend)
+        self.compare_mode = True
+        self.pulse_mode = False
