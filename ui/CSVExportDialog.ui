@@ -65,61 +65,60 @@
        <number>0</number>
       </property>
       <item row="2" column="1">
-       <widget class="QCheckBox" name="checkBox_6">
+       <widget class="QCheckBox" name="checkBox_axis_06">
         <property name="text">
-         <string>Axis 07</string>
+         <string>Axis Spannung</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <property name="leftMargin">
-         <number>20</number>
-        </property>
-       </layout>
-      </item>
       <item row="0" column="0">
-       <widget class="QCheckBox" name="checkBox">
+       <widget class="QCheckBox" name="checkBox_axis_01">
         <property name="layoutDirection">
          <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
-         <string>Axis 01</string>
+         <string>Axis Soll</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QCheckBox" name="checkBox_4">
+       <widget class="QCheckBox" name="checkBox_axis_04">
         <property name="text">
-         <string>Axis 05</string>
+         <string>Axis Beschl. aus Geschw.</string>
         </property>
        </widget>
       </item>
       <item row="2" column="0">
-       <widget class="QCheckBox" name="checkBox_3">
+       <widget class="QCheckBox" name="checkBox_axis_03">
         <property name="text">
-         <string>Axis 03</string>
+         <string>Axis Weg</string>
         </property>
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QCheckBox" name="checkBox_2">
+       <widget class="QCheckBox" name="checkBox_axis_02">
         <property name="text">
-         <string>Axis 02</string>
+         <string>Axis Geschwindigkeit</string>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QCheckBox" name="checkBox_5">
+       <widget class="QCheckBox" name="checkBox_axis_05">
         <property name="text">
-         <string>Axis 06</string>
+         <string>Axis Beschl. aus Geschw. (Filter)</string>
         </property>
        </widget>
       </item>
       <item row="3" column="0">
-       <widget class="QCheckBox" name="checkBox_7">
+       <widget class="QCheckBox" name="checkBox_axis_07">
         <property name="text">
-         <string>Axis 04</string>
+         <string>Axis Beschl. aus Weg</string>
         </property>
        </widget>
       </item>

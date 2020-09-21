@@ -7,10 +7,11 @@ from SinamicsExport import get_last_trace
 from configparser import ConfigParser
 from PyQt5 import QtCore
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget, QTableWidgetItem
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget, QTableWidgetItem, QDialog
 from MainWindow import Ui_MainWindow
 from InfoDialog import Ui_InfoDialog
 from QtInfo import Ui_QtInfo
+from CSVExportDialog import Ui_Dialog
 from PLC import PLC
 from GraphWidget import Graph
 from TraceWidget import TracePlot
@@ -21,9 +22,7 @@ from LangConfig import LanguageConfig
 from loguru import logger
 
 
-
 # todo Pulse Evaluate switch viewmode
-
 
 
 class GraphMainWindow(QMainWindow, Ui_MainWindow):
@@ -42,15 +41,14 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.compare_trace = TraceHelper.Trace()
         self.current_protocol = None
         # Set Gui Language from Plc
-        self.languageCfg = LanguageConfig(self.cfg['GUI'].get('language_file'), default_language='DE' if PLC(self).language.read() else 'EN')
+        self.languageCfg = LanguageConfig(self.cfg['GUI'].get('language_file'),
+                                          default_language='DE' if PLC(self).language.read() else 'EN')
 
         self.setupUi(self)
         self.setupWindow()
 
         self.plc = PLC(self)
         self.plc.start()
-
-
 
         self.trace_plot = TracePlot(self.cfg, self)
         self.graph = Graph(self.cfg, self)
@@ -90,10 +88,11 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.radioButton_standard.setText(self.languageCfg.get('gui_rb_pulse_setting_default'))
         self.radioButton_y_linked.setText(self.languageCfg.get('gui_rb_pulse_setting_y_linked'))
         self.radioButton_interpolate.setText(self.languageCfg.get('gui_rb_pulse_setting_interpolate'))
-        self.spinBox_PulseEditPointCount.setSuffix(' ' + self.languageCfg.get('gui_spinbox_pulse_editpointcount_suffix'))
+        self.spinBox_PulseEditPointCount.setSuffix(
+            ' ' + self.languageCfg.get('gui_spinbox_pulse_editpointcount_suffix'))
         self.btn_submit_plc.setText(self.languageCfg.get('gui_btn_pulse_submit_plc'))
         self.btn_autorange.setText(self.languageCfg.get('gui_btn_pulse_autorange'))
-        self.cb_pulse_view.setItemText(0,self.languageCfg.get('gui_select_pulse_view_single'))
+        self.cb_pulse_view.setItemText(0, self.languageCfg.get('gui_select_pulse_view_single'))
         self.cb_pulse_view.setItemText(1, self.languageCfg.get('gui_select_pulse_view_multi'))
         # Trace
         self.groupBox_trace_imexport.setTitle(self.languageCfg.get('gui_box_trace_imexport'))
@@ -122,7 +121,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.btn_protocol_pdfgen.setText(self.languageCfg.get('gui_btn_protocol_generate_pdf'))
         self.label_protocol_trigger.setText(self.languageCfg.get('gui_title_protocol_trigger'))
         self.label_protocol_general.setText(self.languageCfg.get('gui_title_protocol_general'))
-        self.tableWidget_general.verticalHeaderItem(0).setText(self.languageCfg.get('gui_protocol_type')+':')
+        self.tableWidget_general.verticalHeaderItem(0).setText(self.languageCfg.get('gui_protocol_type') + ':')
         self.tableWidget_general.verticalHeaderItem(1).setText(self.languageCfg.get('gui_protocol_nr') + ':')
         self.tableWidget_general.verticalHeaderItem(2).setText(self.languageCfg.get('gui_protocol_comment') + ':')
         self.tableWidget_general.verticalHeaderItem(3).setText(self.languageCfg.get('gui_protocol_operator') + ':')
@@ -130,7 +129,6 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.tableWidget_general.verticalHeaderItem(5).setText(self.languageCfg.get('gui_protocol_end_pos') + ':')
         self.tableWidget_general.verticalHeaderItem(6).setText(self.languageCfg.get('gui_protocol_load') + ':')
         self.tableWidget_general.verticalHeaderItem(7).setText(self.languageCfg.get('gui_protocol_timestamp') + ':')
-
 
     def setupWindow(self):
         self.setupStrings()
@@ -166,8 +164,93 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
 
         self.btn_tool_scale.clicked.connect(self.handle_scale)
 
+        self.btn_protocol_export_csv.clicked.connect(self.handle_export_csv)
+
         self.actionInfo.triggered.connect(self.show_dialoginfo)
         self.actionAbout_Qt.triggered.connect(self.show_qtinfo)
+
+    def export_csv(self, protocol=None):
+        options = QFileDialog.Options()
+        if not self.cfg['GUI'].getboolean('use_native_filedialog'):
+            options |= QFileDialog.DontUseNativeDialog
+        fileName, fileType = QFileDialog.getSaveFileName(self, "Save CSV Export", "",
+                                                         "CSV Export (*.csv)",
+                                                         options=options)
+        if fileName:
+            if protocol is None:
+                protocol = self.current_protocol.json.data
+            csv_data = []
+            if self.export_ui.checkBox_axis_01.isChecked():
+                # Soll Kurve
+                csv_data.append(protocol.get('puls_x'))
+                csv_data.append(protocol.get('puls_y'))
+            if self.export_ui.checkBox_axis_02.isChecked():
+                # Geschwindigkeit
+                csv_data.append([i * 1000 for i in protocol.get('trace_x')])
+                csv_data.append([i / 60 for i in protocol.get('trace_vel')])
+            if self.export_ui.checkBox_axis_03.isChecked():
+                # Weg
+                csv_data.append([i * 1000 for i in protocol.get('trace_x')])
+                csv_data.append(protocol.get('trace_way'))
+            if self.export_ui.checkBox_axis_04.isChecked():
+                # Beschl. Weg
+                csv_data.append([i * 1000 for i in protocol.get('trace_x')])
+                csv_data.append([(i / 60) * 0.981 for i in protocol.get('trace_acc_way')])
+            if self.export_ui.checkBox_axis_05.isChecked():
+                # Beschl. Geschw.
+                csv_data.append([i * 1000 for i in protocol.get('trace_x')])
+                csv_data.append([(i / 60) * 0.981 for i in protocol.get('trace_acc_vel')])
+            if self.export_ui.checkBox_axis_06.isChecked():
+                # Beschl. Geschw. Filtered
+                csv_data.append([i * 1000 for i in protocol.get('trace_x')])
+                csv_data.append([(i / 60) * 0.981 for i in protocol.get('trace_acc_vel_filt')])
+            if self.export_ui.checkBox_axis_07.isChecked():
+                # Voltage
+                csv_data.append(protocol.get('trace_x'))
+                csv_data.append(protocol.get('trace_voltage'))
+            with open(fileName, 'w', encoding='utf-8', newline='') as f:
+                writer = csv.writer(f, delimiter=';')
+                for c in range(len(csv_data[-1])):
+                    row = []
+                    for i in csv_data:
+                        try:
+                            row.append('{:.10f}'.format(i[c]))
+                        except Exception as e:
+                            row.append('')
+                    writer.writerow(row)
+
+            logger.debug("CSV Exported.")
+        else:
+            logger.debug("CSV Export aborted.")
+
+    def handle_export_csv(self):
+        # check if there is any protocol
+        if self.current_protocol:
+            self.export_dialog = QDialog(self)
+            self.export_ui = Ui_Dialog()
+            self.export_ui.setupUi(self.export_dialog)
+            self.export_dialog.show()
+            self.export_ui.buttonBox.accepted.connect(self.export_csv)
+            logger.debug("CSV Exportdialog displayed.")
+        else:
+            # Todo open pjson export csv
+            options = QFileDialog.Options()
+            if not self.cfg['GUI'].getboolean('use_native_filedialog'):
+                options |= QFileDialog.DontUseNativeDialog
+            fileName, fileType = QFileDialog.getOpenFileName(self, "Open PJson", "",
+                                                             "PJSON Protocol (*.pjson)",
+                                                             options=options)
+            if fileName:
+                prot = ProtocolGen.ProtocolJson()
+                prot.load(fileName)
+                self.export_dialog = QDialog(self)
+                self.export_ui = Ui_Dialog()
+                self.export_ui.setupUi(self.export_dialog)
+                self.export_dialog.show()
+                self.export_ui.buttonBox.accepted.connect(lambda: self.export_csv(prot.json.data))
+                logger.debug("CSV Exportdialog displayed.")
+            else:
+                logger.debug("CSV Exportdialog canceled due no Trace loaded")
 
     def handle_scale(self):
         factor = self.doubleSpinBox_scale_factor.value()
