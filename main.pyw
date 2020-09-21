@@ -30,7 +30,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, config, *args, **kwargs):
         super(GraphMainWindow, self).__init__(*args, **kwargs)
         self.cfg = config
-        self.languageCfg = LanguageConfig(self.cfg['GUI'].get('language_file'), default_language='EN')
+
         self.current_data_x = []
         self.current_data_y = []
         self.compare_data_x = []
@@ -41,12 +41,16 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.current_trace = TraceHelper.Trace()
         self.compare_trace = TraceHelper.Trace()
         self.current_protocol = None
+        # Set Gui Language from Plc
+        self.languageCfg = LanguageConfig(self.cfg['GUI'].get('language_file'), default_language='DE' if PLC(self).language.read() else 'EN')
 
         self.setupUi(self)
         self.setupWindow()
 
         self.plc = PLC(self)
         self.plc.start()
+
+
 
         self.trace_plot = TracePlot(self.cfg, self)
         self.graph = Graph(self.cfg, self)

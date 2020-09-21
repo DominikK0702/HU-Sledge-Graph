@@ -1148,7 +1148,7 @@ QSpinBox {
                  <property name="title">
                   <string>PDF erstellen</string>
                  </property>
-                 <layout class="QVBoxLayout" name="verticalLayout_12">
+                 <layout class="QHBoxLayout" name="horizontalLayout_15">
                   <item>
                    <layout class="QVBoxLayout" name="verticalLayout_11">
                     <property name="spacing">
@@ -1169,6 +1169,18 @@ QSpinBox {
                       </property>
                       <property name="text">
                        <string>Protokoll PDF generieren</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QPushButton" name="btn_protocol_export_csv">
+                      <property name="font">
+                       <font>
+                        <pointsize>10</pointsize>
+                       </font>
+                      </property>
+                      <property name="text">
+                       <string>Export CSV</string>
                       </property>
                      </widget>
                     </item>
@@ -1214,7 +1226,7 @@ QSpinBox {
           <item>
            <layout class="QVBoxLayout" name="tab_layout_pulse">
             <property name="spacing">
-             <number>2</number>
+             <number>0</number>
             </property>
            </layout>
           </item>
@@ -1593,7 +1605,7 @@ QSpinBox {
      <x>0</x>
      <y>0</y>
      <width>1342</width>
-     <height>21</height>
+     <height>18</height>
     </rect>
    </property>
    <property name="defaultUp">
