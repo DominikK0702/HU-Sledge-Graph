@@ -50,6 +50,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.plc = PLC(self)
         self.plc.start()
 
+
         self.trace_plot = TracePlot(self.cfg, self)
         self.graph = Graph(self.cfg, self)
 
@@ -62,6 +63,9 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         self.pen_current = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPH']['color_current']),
                                     width=self.cfg['GRAPH'].getint('width_current'))
         self.show()
+
+
+
 
     def setupStrings(self):
         # Tab Widget View
@@ -420,6 +424,8 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                 self.graph.plot(self.current_data_x, self.current_data_y, pen=self.pen_current,
                                 name=self.cfg['STRINGS']['graph_current_label'])
                 self.graph.getPlotItem().legend.setPen(self.graph.pen_legend)
+                self.graph.setXLabel(self.cfg['GRAPH']['name_ax_x'])
+                self.graph.setYLabel(self.cfg['GRAPH']['name_ax_y'])
 
                 self.graph.enableAutoRange(x=True, y=True)
                 self.graph.setTitle(fileName.split('/')[-1])

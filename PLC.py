@@ -212,11 +212,9 @@ class PLC(QtCore.QThread):
         trace = Trace()
         trace.load_trace_csv(filename)
 
-        # soll_data = [i * 60 * 0.981 for i in self.array_soll.read()]
-        # todo test calc to m/s²
-        soll_data = [i * 0.981 for i in self.array_soll.read()]
+        soll_data = self.array_soll.read()
 
-        offset = 35
+        offset = 50
         soll_x = [i * 1000 for i in offset_x_soll(soll_data, offset)]
         pulsdauer = soll_x[-1] + 50
 
