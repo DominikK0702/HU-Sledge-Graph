@@ -362,7 +362,7 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
         for index, trig in enumerate(protocol.json.data['trigger'].items()):
             self.tableWidget_trigger.setItem(index, 0, QTableWidgetItem(trig[1]['name']))
             self.tableWidget_trigger.setItem(index, 1, QTableWidgetItem(str(trig[1]['zeit'] / 1e6) + ' ms'))
-            self.tableWidget_trigger.setItem(index, 2, QTableWidgetItem(str(trig[1]['enabled'])))
+            self.tableWidget_trigger.setItem(index, 2, QTableWidgetItem(self.languageCfg.get('gui_true') if trig[1]['enabled'] else self.languageCfg.get('gui_false')))
 
         self.trace_plot.load_trace_protocol(protocol)
 
@@ -410,7 +410,10 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.statusbar.showMessage('Kein Protokoll geladen um PDF zu erstellen.')
 
     def handle_load_last_protocol(self):
-        path = self.plc.path_json_export.read()
+        done = False
+        while not done:
+            path = self.plc.path_json_export.read()
+            done = True
         # path = ''
         if path == '':
             path = "./export/protocols"
