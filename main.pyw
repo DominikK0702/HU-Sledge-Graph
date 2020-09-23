@@ -7,7 +7,7 @@ from SinamicsExport import get_last_trace
 from configparser import ConfigParser
 from PyQt5 import QtCore
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget, QTableWidgetItem, QDialog
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget, QTableWidgetItem, QDialog, QDialogButtonBox
 from MainWindow import Ui_MainWindow
 from InfoDialog import Ui_InfoDialog
 from QtInfo import Ui_QtInfo
@@ -20,6 +20,10 @@ import TraceHelper
 from Protocol import ProtocolGen
 from LangConfig import LanguageConfig
 from loguru import logger
+# Single Instance
+from tendo import singleton
+
+me = singleton.SingleInstance()
 
 
 # todo Pulse Evaluate switch viewmode
@@ -29,15 +33,10 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, config, *args, **kwargs):
         super(GraphMainWindow, self).__init__(*args, **kwargs)
         self.cfg = config
-
         self.current_data_x = []
         self.current_data_y = []
-        self.compare_data_x = []
         self.compare_soll_data_y = []
-        self.ist_data_y = []
-        self.edit_mode = False
         self.current_file_name = ''
-        self.current_trace = TraceHelper.Trace()
         self.compare_trace = TraceHelper.Trace()
         self.current_protocol = None
         # Set Gui Language from Plc
@@ -49,7 +48,6 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
 
         self.plc = PLC(self)
         self.plc.start()
-
 
         self.trace_plot = TracePlot(self.cfg, self)
         self.graph = Graph(self.cfg, self)
@@ -64,10 +62,17 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                                     width=self.cfg['GRAPH'].getint('width_current'))
         self.show()
 
-
-
-
     def setupStrings(self):
+        # Window Title
+        self.setWindowTitle(self.languageCfg.get('title'))
+
+        # Menu bar
+        self.menuFile.setTitle(self.languageCfg.get('gui_menubar_file'))
+        self.actionExit.setText(self.languageCfg.get('gui_menubar_file_exit'))
+        self.menuInfo.setTitle(self.languageCfg.get('gui_menubar_info'))
+        self.actionInfo.setText(self.languageCfg.get('gui_menubar_info_info'))
+        self.actionAbout_Qt.setText(self.languageCfg.get('gui_menubar_info_aboutqt'))
+
         # Tab Widget View
         self.tabWidget.setTabText(0, self.languageCfg.get('gui_tab_pulse_title'))
         self.tabWidget.setTabText(1, self.languageCfg.get('gui_tab_trace_title'))
@@ -212,15 +217,40 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                 # Voltage
                 csv_data.append(protocol.get('trace_x'))
                 csv_data.append(protocol.get('trace_voltage'))
+
+            delimiter = ';'
+            if self.export_ui.comboBox_csv_sep.currentIndex() == 0:
+                # Semicolon ; Seperator
+                delimiter = ';'
+            elif self.export_ui.comboBox_csv_sep.currentIndex() == 1:
+                # Comma , Seperator
+                delimiter = ','
+            elif self.export_ui.comboBox_csv_sep.currentIndex() == 2:
+                # Tab \t Seperator
+                delimiter = '\t'
+
+            float_point = '.'
+            if self.export_ui.comboBox_float_point.currentIndex() == 0:
+                float_point = '.'
+            elif self.export_ui.comboBox_float_point.currentIndex() == 1:
+                float_point = ','
+
+
+            empty = ''
+            if self.export_ui.comboBox_no_value_placeholder.currentIndex() == 0:
+                empty = ''
+            elif self.export_ui.comboBox_no_value_placeholder.currentIndex() == 1:
+                empty = '{:.10f}'.format(0.0).replace('.',float_point)
+
             with open(fileName, 'w', encoding='utf-8', newline='') as f:
-                writer = csv.writer(f, delimiter=';')
+                writer = csv.writer(f, delimiter=delimiter)
                 for c in range(len(csv_data[-1])):
                     row = []
                     for i in csv_data:
                         try:
-                            row.append('{:.10f}'.format(i[c]))
+                            row.append('{:.10f}'.format(i[c]).replace('.',float_point))
                         except Exception as e:
-                            row.append('')
+                            row.append(empty)
                     writer.writerow(row)
 
             logger.debug("CSV Exported.")
@@ -233,11 +263,27 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
             self.export_dialog = QDialog(self)
             self.export_ui = Ui_Dialog()
             self.export_ui.setupUi(self.export_dialog)
+            self.export_ui.groupBox.setTitle(self.languageCfg.get('gui_csvexport_dialog_group_title'))
+            self.export_ui.buttonBox.button(QDialogButtonBox.Ok).setText(self.languageCfg.get('gui_csvexport_dialog_group_ok'))
+            self.export_ui.buttonBox.button(QDialogButtonBox.Cancel).setText(self.languageCfg.get('gui_csvexport_dialog_group_cancel'))
+
+            self.export_ui.label_csv_sep.setText(self.languageCfg.get('gui_csvexport_dialog_label_csv_sep'))
+            self.export_ui.label_float_point.setText(self.languageCfg.get('gui_csvexport_dialog_label_csv_float_point'))
+            self.export_ui.label_no_value_placeholder.setText(self.languageCfg.get('gui_csvexport_dialog_label_csv_placeholder'))
+            self.export_ui.label_warning.setText(self.languageCfg.get('gui_csvexport_dialog_csv_warning'))
+            self.export_ui.textBrowser_disclaimer.setText(self.languageCfg.get('gui_csvexport_dialog_csv_disclaimer'))
+
+            self.export_ui.checkBox_axis_01.setText(self.languageCfg.get('gui_csvexport_dialog_axis01'))
+            self.export_ui.checkBox_axis_02.setText(self.languageCfg.get('gui_csvexport_dialog_axis02'))
+            self.export_ui.checkBox_axis_03.setText(self.languageCfg.get('gui_csvexport_dialog_axis03'))
+            self.export_ui.checkBox_axis_04.setText(self.languageCfg.get('gui_csvexport_dialog_axis04'))
+            self.export_ui.checkBox_axis_05.setText(self.languageCfg.get('gui_csvexport_dialog_axis05'))
+            self.export_ui.checkBox_axis_06.setText(self.languageCfg.get('gui_csvexport_dialog_axis06'))
+            self.export_ui.checkBox_axis_07.setText(self.languageCfg.get('gui_csvexport_dialog_axis07'))
             self.export_dialog.show()
             self.export_ui.buttonBox.accepted.connect(self.export_csv)
             logger.debug("CSV Exportdialog displayed.")
         else:
-            # Todo open pjson export csv
             options = QFileDialog.Options()
             if not self.cfg['GUI'].getboolean('use_native_filedialog'):
                 options |= QFileDialog.DontUseNativeDialog
@@ -250,6 +296,23 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
                 self.export_dialog = QDialog(self)
                 self.export_ui = Ui_Dialog()
                 self.export_ui.setupUi(self.export_dialog)
+                self.export_ui.groupBox.setTitle(self.languageCfg.get('gui_csvexport_dialog_group_title'))
+                self.export_ui.buttonBox.button(QDialogButtonBox.Ok).setText(
+                    self.languageCfg.get('gui_csvexport_dialog_group_ok'))
+                self.export_ui.buttonBox.button(QDialogButtonBox.Cancel).setText(
+                    self.languageCfg.get('gui_csvexport_dialog_group_cancel'))
+                self.export_ui.label_csv_sep.setText(self.languageCfg.get('gui_csvexport_dialog_label_csv_sep'))
+                self.export_ui.label_float_point.setText(
+                    self.languageCfg.get('gui_csvexport_dialog_label_csv_float_point'))
+                self.export_ui.label_no_value_placeholder.setText(
+                    self.languageCfg.get('gui_csvexport_dialog_label_csv_placeholder'))
+                self.export_ui.checkBox_axis_01.setText(self.languageCfg.get('gui_csvexport_dialog_axis01'))
+                self.export_ui.checkBox_axis_02.setText(self.languageCfg.get('gui_csvexport_dialog_axis02'))
+                self.export_ui.checkBox_axis_03.setText(self.languageCfg.get('gui_csvexport_dialog_axis03'))
+                self.export_ui.checkBox_axis_04.setText(self.languageCfg.get('gui_csvexport_dialog_axis04'))
+                self.export_ui.checkBox_axis_05.setText(self.languageCfg.get('gui_csvexport_dialog_axis05'))
+                self.export_ui.checkBox_axis_06.setText(self.languageCfg.get('gui_csvexport_dialog_axis06'))
+                self.export_ui.checkBox_axis_07.setText(self.languageCfg.get('gui_csvexport_dialog_axis07'))
                 self.export_dialog.show()
                 self.export_ui.buttonBox.accepted.connect(lambda: self.export_csv(prot.json.data))
                 logger.debug("CSV Exportdialog displayed.")

@@ -114,6 +114,7 @@ class EditCurve(pg.PolyLineROI):
                     intp = [f(i['pos'].x()) for i in self.handles]
                     for cnt, i in enumerate(intp):
                         self.handles[cnt]['item'].setY(i)
+                        self.handles[cnt]['item'].setX(x[cnt])# todo is it better?
                         #self.drawer.mainwindow.current_data_y[self.index - (self.points_count // 2) + cnt] = float(i)
             except Exception as e:
                 self.drawer.mainwindow.statusbar.showMessage(str(e))

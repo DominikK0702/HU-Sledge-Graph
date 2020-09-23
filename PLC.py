@@ -79,13 +79,14 @@ class PLC(QtCore.QThread):
         self.path_json_export = Smarttags.String(self.plc, self.cfg['PLC'].getint('db_out'), 334, 255)
         self.language = Smarttags.Bool(self.plc, self.cfg['PLC'].getint('db_out'), 590, 0)
         self.dpi = 100
+        self.currentLangDE = None
 
     def submit_data(self, datay):
         done = False
         logger.debug('Submitting data to plc')
         while not done:
             try:
-                self.array_soll.write([i * 9.81 for i in datay])
+                self.array_soll.write([i * 9.80665 for i in datay])
                 self.soll_len.write(len(datay))
                 done = True
                 logger.debug('Data submitted to plc')
@@ -247,6 +248,15 @@ class PLC(QtCore.QThread):
         del (ax)
         del (fig)
 
+    def setLanguage(self):
+        if self.currentLangDE != self.language.read():
+            self.currentLangDE = self.language.read()
+            if self.currentLangDE:
+                self.parent.languageCfg.set_language('DE')
+            else:
+                self.parent.languageCfg.set_language('EN')
+            self.parent.setupStrings()
+
     def run(self):
         self.parent.statusbar.showMessage(self.cfg['STRINGS']['status_plc_connecting'])
         self.sleep(1)
@@ -284,6 +294,10 @@ class PLC(QtCore.QThread):
                         self.plot_kompl()
                         self.anf_kompl.write(False)
                         self.plot_done_kompl.write(True)
+
+                    self.setLanguage()
+
+
 
 
             except Exception as e:
