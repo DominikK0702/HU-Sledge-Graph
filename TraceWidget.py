@@ -12,8 +12,8 @@ class TraceAxis:
         self.axis = None
         self.pen = None
 
-    def set_pen(self, hexrgb, width):
-        self.pen = pg.mkPen(color='#' + hexrgb, width=1)
+    def set_pen(self, hexrgb, width=1):
+        self.pen = pg.mkPen(color='#' + hexrgb, width=width)
 
     def addPlot(self, row, col):
         self.axis = self.trace_plot.addPlot(row=row, col=col, title=self.name)
@@ -181,7 +181,6 @@ class TracePlot(pg.GraphicsLayoutWidget):
 
     def plot(self):
         first_ax = None
-        last_ax = None
         for cnt, ax in enumerate(self.active_axis):
             if self.viewmode == TracePlot.VM_MULTI:
                 if cnt == 0:

@@ -20,9 +20,10 @@ import TraceHelper
 from Protocol import ProtocolGen
 from LangConfig import LanguageConfig
 from loguru import logger
+
 # Single Instance
 from tendo import singleton
-
+# Raises Exception if theres already another Instance
 me = singleton.SingleInstance()
 
 
@@ -57,7 +58,6 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
 
         self.connect_componets()
 
-        self.pen_zero = pg.mkPen(color=(255, 255, 0), width=1)
         self.pen_current = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPH']['color_current']),
                                     width=self.cfg['GRAPH'].getint('width_current'))
         self.show()
@@ -142,7 +142,6 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
     def setupWindow(self):
         self.setupStrings()
         self.setWindowIcon(QtGui.QIcon(self.cfg['GUI']['window_icon']))
-        self.setWindowTitle(self.languageCfg.get('title'))
         self.logo.setPixmap(QtGui.QPixmap(self.cfg['GUI']['logo']))
         self.monitor = QDesktopWidget().screenGeometry(self.cfg['GUI'].getint('monitor_nr'))
         self.move(self.monitor.left(), self.monitor.top())

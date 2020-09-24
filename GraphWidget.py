@@ -2,7 +2,6 @@ import pyqtgraph as pg
 from GraphCursor import Cursor
 from PIL import ImageColor
 from bisect import bisect_left
-from scipy.signal import savgol_filter
 from TraceHelper import offset_x_soll
 from scipy import interpolate
 from loguru import logger
@@ -24,9 +23,7 @@ class EditCurve(pg.PolyLineROI):
         self.linked = False
         self.points = []
         self.data = []
-        self.line_pen = pg.mkPen(color=(0, 0, 0, 255), width=2)
         pg.PolyLineROI.__init__(self, [], movable=False)
-        self.handleSize = 7
         self.handlePen.setColor(pg.QtGui.QColor(0, 0, 0))
         self.pen.setColor(pg.QtGui.QColor(0, 0, 0))
 
@@ -44,7 +41,6 @@ class EditCurve(pg.PolyLineROI):
         self.linked = state
 
     def finished(self):
-        data = []
         any = False
         for cnt, i in enumerate(self.handles):
             if i['pos'].__repr__().find('PyQt5.QtCore.QPointF') >= 0:

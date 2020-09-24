@@ -242,8 +242,6 @@ class ProtocolPDF:
         self.__elements.append(image)
 
     def _trace_plot(self, title, xlabel, ylabel, x, y):
-
-        scale = 0.5
         data_ist_x = [i*1000 for i in x if i*1000 <= 260]
         data_ist_y = y[:len(data_ist_x)]
         obj = io.BytesIO()
