@@ -40,8 +40,19 @@ class EditCurve(pg.PolyLineROI):
     def set_linked(self, state):
         self.linked = state
 
+    def undo(self):
+        if len(self.drawer.history) > 0:
+            self.drawer.mainwindow.current_data_y = self.drawer.history.pop()
+            self.drawer.clear()
+
+            self.drawer.plot(self.drawer.mainwindow.current_data_x, self.drawer.mainwindow.current_data_y, pen=self.drawer.mainwindow.pen_current,
+                            name=self.drawer.mainwindow.languageCfg.get('graph_current_label'))
+            self.drawer.getPlotItem().legend.setPen(self.drawer.pen_legend)
+
     def finished(self):
         any = False
+
+        once = False
         for cnt, i in enumerate(self.handles):
             if i['pos'].__repr__().find('PyQt5.QtCore.QPointF') >= 0:
                 any = True
@@ -49,7 +60,13 @@ class EditCurve(pg.PolyLineROI):
                 self.moved_y = y
                 x = i['pos'].x()
                 self.moved_x = x
+                if not once:
+
+                    self.drawer.history.append(self.drawer.mainwindow.current_data_y.copy())
+                    once = True
+
                 self.drawer.mainwindow.current_data_y[self.index - (self.points_count // 2) + cnt] = y
+        once = False
         if any:
             if self.mode_y_linked:
                 for cnt, i in enumerate(self.handles):
@@ -140,6 +157,7 @@ class Graph(pg.PlotWidget):
         self.edit_mode = False
         self.current_mouse_pos = None
         self.bez = None
+        self.history = []
         self.setMouseEnabled(x=self.cfg['GRAPH'].getboolean('mouseenable_x'),
                              y=self.cfg['GRAPH'].getboolean('mouseenable_x'))
         self.enableAutoRange(x=self.cfg['GRAPH'].getboolean('autorange_x'),

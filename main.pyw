@@ -7,7 +7,7 @@ from SinamicsExport import get_last_trace
 from configparser import ConfigParser
 from PyQt5 import QtCore
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget, QTableWidgetItem, QDialog, QDialogButtonBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDesktopWidget, QTableWidgetItem, QDialog, QDialogButtonBox, QShortcut
 from MainWindow import Ui_MainWindow
 from InfoDialog import Ui_InfoDialog
 from QtInfo import Ui_QtInfo
@@ -60,7 +60,15 @@ class GraphMainWindow(QMainWindow, Ui_MainWindow):
 
         self.pen_current = pg.mkPen(color=ImageColor.getrgb('#' + self.cfg['GRAPH']['color_current']),
                                     width=self.cfg['GRAPH'].getint('width_current'))
+        self.undo_shortcut = QShortcut(QtGui.QKeySequence("Ctrl+Z"), self)
+        self.undo_shortcut.activated.connect(self.handle_undo_shortcut)
         self.show()
+
+    def handle_undo_shortcut(self):
+        if self.tabWidget.currentIndex() == 0 and self.graph.edit_mode:
+            # Pulse Tab and edit mode active
+            if self.graph.bez is not None:
+                self.graph.bez.undo()
 
     def setupStrings(self):
         # Window Title

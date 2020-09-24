@@ -270,7 +270,6 @@ class PLC(QtCore.QThread):
                 if not self.plc.connect():
                     self.parent.statusbar.showMessage(self.cfg['STRINGS']['status_plc_disconnected'])
                 else:
-                    # todo check language string from plc and set langcfg
                     self.keep_alive.write(not self.keep_alive.read())
                     if self.anf_soll.read():
                         if self.parent.current_data_y:
