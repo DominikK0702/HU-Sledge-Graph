@@ -84,6 +84,7 @@ class EditCurve(pg.PolyLineROI):
                 for cnt, i in enumerate(intp):
                     self.drawer.mainwindow.current_data_y[self.index - (self.points_count // 2) + cnt] = float(i)
 
+
             self.drawer.plot(self.drawer.mainwindow.current_data_x, self.drawer.mainwindow.current_data_y, clear=True,
                              pen=self.drawer.mainwindow.pen_current,
                              name=self.drawer.cfg['STRINGS']['graph_current_label'])
