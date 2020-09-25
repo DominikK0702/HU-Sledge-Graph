@@ -7,4 +7,3 @@ class OSledgeGraphApplication(QApplication):
         super(OSledgeGraphApplication, self).__init__(*args, **kwargs)
         self.configmanager = OSGConfigManager('new_config.ini')
         self.ui = OSGMainWindow(self)
-        print(1)
