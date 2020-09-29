@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QMainWindow, QDesktopWidget
 from PyQt5.QtGui import QPixmap, QIcon
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QMutex
 from ui.OSGMainWindow import Ui_OSGMainWindow
 from OSGConverter import OSGConverter
 from OSGPLC import OSGPLC
@@ -13,10 +13,13 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
         self.application = app
         self.setupUi(self)
         self.setupWindow()
-        self.plc = OSGPLC(self)
-        self.converter = OSGConverter(self)
+
         self.data_container = OSGDataContainer()
         self.show()
+        self.plc = OSGPLC(self)
+        self.setupPlcEvents()
+
+        self.converter = OSGConverter(self)
 
     def setupWindow(self):
         self.setWindowMonitor()
@@ -27,7 +30,11 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
         if self.application.configmanager._config['APP'].getboolean('maximized'): self.showMaximized()
         if self.application.configmanager._config['APP'].getboolean('fullscreen'): self.showFullScreen()
         self.setupStrings()
+
         self.connectComponents()
+
+    def setupPlcEvents(self):
+        self.plc.events.language_changed.connect(self.setupStrings)
 
     def showMessage(self, message, duration=0):
         self.statusbar.showMessage(message, duration)
@@ -40,7 +47,6 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
     def setupStrings(self):
         # Main Window Title
         self.setWindowTitle(self.application.configmanager.lang_get_string('title'))
-
         # Main Window Menu bar
 
     def connectComponents(self):

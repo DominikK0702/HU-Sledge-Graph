@@ -1,4 +1,8 @@
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, QObject, pyqtSignal
+
+
+class ConverterEvents(QObject):
+    language_changed = pyqtSignal()
 
 
 class OSGConverter(QThread):
@@ -8,7 +12,9 @@ class OSGConverter(QThread):
         self.delay = self.parent.application.configmanager._config['CONVERTER'].getint('refresh_delay_ms')
         self.running = True
         self.setConnectionStatus(False)
-        self.start()
+        self.events = ConverterEvents()
+        # todo remove comment below
+        # self.start()
 
     def setConnectionStatus(self, state):
         self.parent.setConverterConnectionStatus(state)
@@ -17,7 +23,6 @@ class OSGConverter(QThread):
         return False
 
     def run(self):
-
         while self.connected():
             print(self.delay)
             self.msleep(self.delay)
