@@ -1,15 +1,21 @@
 from PyQt5.QtWidgets import QMainWindow, QDesktopWidget
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt
-from MainWindow import Ui_MainWindow
+from ui.OSGMainWindow import Ui_OSGMainWindow
+from OSGConverter import OSGConverter
+from OSGPLC import OSGPLC
+from OSGDataContainer import OSGDataContainer
 
 
-class OSGMainWindow(QMainWindow, Ui_MainWindow):
+class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
     def __init__(self, app, *args, **kwargs):
         super(OSGMainWindow, self).__init__(*args, **kwargs)
         self.application = app
         self.setupUi(self)
         self.setupWindow()
+        self.plc = OSGPLC(self)
+        self.converter = OSGConverter(self)
+        self.data_container = OSGDataContainer()
         self.show()
 
     def setupWindow(self):
@@ -36,22 +42,26 @@ class OSGMainWindow(QMainWindow, Ui_MainWindow):
         self.setWindowTitle(self.application.configmanager.lang_get_string('title'))
 
         # Main Window Menu bar
-        self.menuFile.setTitle(self.application.configmanager.lang_get_string('gui_menubar_file'))
-        self.actionExit.setText(self.application.configmanager.lang_get_string('gui_menubar_file_exit'))
-        self.menuInfo.setTitle(self.application.configmanager.lang_get_string('gui_menubar_info'))
-        self.actionInfo.setText(self.application.configmanager.lang_get_string('gui_menubar_info_info'))
-        self.actionAbout_Qt.setText(self.application.configmanager.lang_get_string('gui_menubar_info_aboutqt'))
 
     def connectComponents(self):
-        self.btn_load.clicked.connect(lambda: print(1))
-
-
-        self.setPlcConnectionStatus(False)
+        pass
 
     def setPlcConnectionStatus(self, state):
         if state:
-            self.label_plc_status_value.setText('connected')
-            self.label_plc_status_value.setStyleSheet('color: #00FF00')
+            self.labelPlcStatusValue.setText('connected')
+            self.labelPlcStatusValue.setStyleSheet(
+                f"color: #{self.application.configmanager._config['PLC'].get('color_connected')}")
         else:
-            self.label_plc_status_value.setText('disconnected')
-            self.label_plc_status_value.setStyleSheet('color: #FF0000')
+            self.labelPlcStatusValue.setText('disconnected')
+            self.labelPlcStatusValue.setStyleSheet(
+                f"color: #{self.application.configmanager._config['PLC'].get('color_disconnected')}")
+
+    def setConverterConnectionStatus(self, state):
+        if state:
+            self.labelConverterStatusValue.setText('connected')
+            self.labelConverterStatusValue.setStyleSheet(
+                f"color: #{self.application.configmanager._config['CONVERTER'].get('color_connected')}")
+        else:
+            self.labelConverterStatusValue.setText('disconnected')
+            self.labelConverterStatusValue.setStyleSheet(
+                f"color: #{self.application.configmanager._config['CONVERTER'].get('color_disconnected')}")
