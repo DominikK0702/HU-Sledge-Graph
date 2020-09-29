@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QThread, QMutex
 from PyLcSnap7.PLC import S7Conn
 from PyLcSnap7 import Smarttags
 from loguru import logger
@@ -93,6 +93,7 @@ class OSGPLC(QThread):
         super(OSGPLC, self).__init__()
         self.parent = parent
         self.configmanager = parent.application.configmanager
+        self.mutex = QMutex()
         self.delay = self.configmanager._config['PLC'].getint('refresh_delay_ms')
         self.running = True
         self.setConnectionStatus(False)
@@ -124,6 +125,7 @@ class OSGPLC(QThread):
     def set_language(self):
         if self.current_language_german != self.gdb_graph_out.language_german.read():
             self.current_language_german = self.gdb_graph_out.language_german.read()
+
             if self.current_language_german:
                 self.configmanager._lang_cfg.set_language('DE')
                 logger.debug('switched language to german')
@@ -131,11 +133,12 @@ class OSGPLC(QThread):
                 self.configmanager._lang_cfg.set_language('EN')
                 logger.debug('switched language to english')
 
+            # todo mutex thread lock
             self.parent.setupStrings()
 
     def get_target_pulse(self):
 
-        return self.parent.data_container.get_pulse_to_transfer()
+        return []
 
     def submit_target_pulse(self):
         logger.warning('Anforderung Soll Kurve laden')
@@ -163,9 +166,12 @@ class OSGPLC(QThread):
     def run(self):
         logger.info('PLC QThread started')
         while self.running:
+
             if not self.connected():
                 continue
+
             try:
+                pass
                 self.loop()
             except Exception as e:
                 pass
