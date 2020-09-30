@@ -170,11 +170,9 @@ class OSGPLC(QThread):
         logger.info('PLC QThread started')
         while self.running:
 
-            if not self.connected():
-                continue
-
-            try:
-                self.loop()
-            except Exception as e:
-                pass
+            if self.connected():
+                try:
+                    self.loop()
+                except Exception as e:
+                    logger.info(e)
             self.msleep(self.delay)

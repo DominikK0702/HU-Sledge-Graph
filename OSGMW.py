@@ -1,10 +1,34 @@
-from PyQt5.QtWidgets import QMainWindow, QDesktopWidget
+from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QFileDialog
 from PyQt5.QtGui import QPixmap, QIcon
-from PyQt5.QtCore import Qt, QMutex
+from PyQt5.QtCore import Qt
 from ui.OSGMainWindow import Ui_OSGMainWindow
 from OSGConverter import OSGConverter
 from OSGPLC import OSGPLC
 from OSGDataContainer import OSGDataContainer
+from loguru import logger
+
+
+class OSGMWPulseToolTab:
+    def __init__(self, mainwindow):
+        self.mainwindow = mainwindow
+        self.cfgmanager = mainwindow.application.configmanager
+        self.connect_components()
+
+    def connect_components(self):
+        self.mainwindow.pushButtonImportPulse.clicked.connect(self.import_pulse)
+
+    def import_pulse(self):
+        logger.info('Import Pulse')
+        options = QFileDialog.Options()
+        fileName, fileType = QFileDialog.getOpenFileName(self.mainwindow,
+                                                         self.cfgmanager.lang_get_string('filedialog_pulse_import_title'),
+                                                         self.cfgmanager._config['PULSE'].get('import_file_dir'),
+                                                         f"{self.cfgmanager.lang_get_string('filedialog_pulse_import_ext_title')} ({self.cfgmanager._config['PULSE'].get('import_file_ext')})",
+                                                         options=options)
+        if fileName:
+            logger.info(f"Pulse selected: {fileName}")
+        else:
+            logger.info('Import pulse canceled by user.')
 
 
 class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
@@ -13,13 +37,14 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
         self.application = app
         self.setupUi(self)
         self.setupWindow()
-
+        self.tool_tab_pulse = OSGMWPulseToolTab(self)
         self.data_container = OSGDataContainer()
-        self.show()
+
         self.plc = OSGPLC(self)
         self.setupPlcEvents()
 
         self.converter = OSGConverter(self)
+        self.show()
 
     def setupWindow(self):
         self.setWindowMonitor()
