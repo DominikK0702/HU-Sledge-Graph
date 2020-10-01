@@ -123,7 +123,7 @@
                     <widget class="QLabel" name="labelCurrentPulseNameValue">
                      <property name="font">
                       <font>
-                       <pointsize>10</pointsize>
+                       <pointsize>8</pointsize>
                       </font>
                      </property>
                      <property name="text">
@@ -152,6 +152,30 @@
                      </property>
                      <property name="text">
                       <string>-140 G</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="labelCurrentPulseDuration">
+                     <property name="font">
+                      <font>
+                       <pointsize>10</pointsize>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>Duration:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="1">
+                    <widget class="QLabel" name="labelCurrentPulseDurationValue">
+                     <property name="font">
+                      <font>
+                       <pointsize>10</pointsize>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>100 ms</string>
                      </property>
                     </widget>
                    </item>

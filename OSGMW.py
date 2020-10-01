@@ -27,6 +27,14 @@ class OSGMWPulseToolTab:
                                                          options=options)
         if fileName:
             logger.info(f"Pulse selected: {fileName}")
+            if self.mainwindow.data_container.import_pulse(fileName):
+                logger.info('Pulse imported: ' + str(self.mainwindow.data_container.pulse_data))
+                self.mainwindow.set_current_pulseinfo(self.mainwindow.data_container.pulse_data.get_name(),
+                                                      self.mainwindow.data_container.pulse_data.get_max(),
+                                                      self.mainwindow.data_container.pulse_data.get_min(),
+                                                      self.mainwindow.data_container.pulse_data.get_durationms())
+            else:
+                logger.error('Importing Pulse failed.')
         else:
             logger.info('Import pulse canceled by user.')
 
@@ -74,6 +82,12 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
         self.setWindowTitle(self.application.configmanager.lang_get_string('title'))
         # Main Window Menu bar
 
+    def set_current_pulseinfo(self,name, max, min,durationms):
+        self.labelCurrentPulseNameValue.setText(name)
+        self.labelCurrentPulseMaxValue.setText(str(max)+' G')
+        self.labelCurrentPulseMinValue.setText(str(min)+' G')
+        self.labelCurrentPulseDurationValue.setText(str(round(durationms,2)) + ' ms')
+
     def connectComponents(self):
         pass
 
@@ -96,3 +110,4 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
             self.labelConverterStatusValue.setText('disconnected')
             self.labelConverterStatusValue.setStyleSheet(
                 f"color: #{self.application.configmanager._config['CONVERTER'].get('color_disconnected')}")
+

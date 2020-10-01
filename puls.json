@@ -1,0 +1,22 @@
+{
+  "name": "origin_pulse",
+  "description": "",
+  "resolution": 16000,
+  "datapoints": 3001,
+  "data": {
+    "x": [],
+    "y": []
+  },
+  "branches": [
+    {
+      "name": "branch_pulse",
+      "description": "",
+      "resolution": 16000,
+      "datapoints": 3001,
+      "data": {
+        "x": [],
+        "y": []
+      }
+    }
+  ]
+}
