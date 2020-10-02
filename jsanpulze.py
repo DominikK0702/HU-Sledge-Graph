@@ -1,40 +1,61 @@
 import json
 
-class OSGPulseData:
+class OSGPulse:
+    def __init__(self, json):
+        for key, value in json.items():
+            self.__setattr__(key,value)
+
+    def get_datapoints(self):
+        return self.datapoints
+
+    def get_name(self):
+        return self.name
+
+    def get_description(self):
+        return self.description
+
+    def get_x(self):
+        return self.data['x']
+
+    def get_y(self):
+        return self.data['y']
+
+    def get_data(self):
+        return [list(i) for i in zip(self.get_x(),self.get_y())]
+
+    def get_branch_count(self):
+        return len(self.branches)
+
+    def get_branches(self):
+        return [OSGPulse(i) for i in self.branches]
+
+
+
+class OSGPulseLibrary:
     def __init__(self):
-        self.name = None
-        self.description = None
-        self.resolution = None
-        self.datapoints = None
-        self.data = {
-            'x': [],
-            'y': []
-        }
-        self.branches = []
-
-    def add_branch(self, pulse):
-        self.branches.append(pulse)
-
-
-
-class OGSPulseJson:
-    def __init__(self):
-        self.pulse = OSGPulseData()
+        self.json = None
 
     def load(self, filename):
         with open('puls.json', 'r', encoding='utf-8') as f:
-            data = json.loads(f.read())
-        if data:
-            self.pulse.name = data.get('name')
-            self.pulse.description = data.get('description')
-            self.pulse.resolution = data.get('resolution')
-            self.pulse.datapoints = data.get('datapoints')
-            self.pulse.data = data.get('data')
-            self.branches = data.get('branches')
+            self.json = OSGPulse(json.loads(f.read()))
+
+    def get_branch(self, index):
+        return OSGPulse(self.json.branches[0])
+
+
+
+
 
 def main():
-    x = OGSPulseJson()
+
+    x = OSGPulseLibrary()
     x.load('puls.json')
+    puls = x.get_branch(0)
+
+
+
+
+
     print(1)
 
 
