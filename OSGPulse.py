@@ -26,6 +26,15 @@ class OSGPulseData:
         if self._current_file:
             return os.path.split(self._current_file)[1]
 
+    def get_x(self):
+        return self.x
+
+    def get_y(self):
+        return self.y
+
+    def get_data(self):
+        return self.x, self.y
+
     def get_max(self):
         return max(self.y)
 
