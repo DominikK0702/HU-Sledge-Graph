@@ -1,83 +1,86 @@
+import json
 import csv
-import os
 from loguru import logger
 
-
-class OSGPulseData:
-    def __init__(self):
-        self.x = []
-        self.y = []
-        self._current_file = None
-        self._data_avliable = False
+class OSGPulseData(dict):
+    def __int__(self, data):
+        super(OSGPulseData, self).__int__(data)
 
     def __repr__(self):
-        return f"PulseData: {self.get_datapoint_count()} | {self.get_resolution()} Hz | {self.get_current_file()}"
-
-    def clear(self):
-        self.x = []
-        self.y = []
-        self._current_file = None
-        self._data_avliable = False
-
-    def get_current_file(self):
-        return self._current_file
+        return f"{self.get_name()} | {self.get_resolution()} hz | {self.get_datapoints()} points | {self.get_branches_count()} branches"
 
     def get_name(self):
-        if self._current_file:
-            return os.path.split(self._current_file)[1]
+        return self.get('name')
 
-    def get_x(self):
-        return self.x
-
-    def get_y(self):
-        return self.y
-
-    def get_data(self):
-        return self.x, self.y
-
-    def get_max(self):
-        return max(self.y)
-
-    def get_min(self):
-        return min(self.y)
-
-    def get_durationms(self):
-        # In Ms
-        return self.x[-1]*1000
-
-    def get_datapoint_count(self):
-        return len(self.x), len(self.y)
+    def get_description(self):
+        return self.get('description')
 
     def get_resolution(self):
-        if self._data_avliable:
-            samples = []
-            length = len(self.x)
-            for cnt, i in enumerate(self.x):
-                if (cnt+1) >= length:
-                    break
-                samples.append(1/(self.x[cnt+1]-i))
+        return self.get('resolution')
 
-            return int(sum(samples)/len(samples)) # Average
+    def get_datapoints(self):
+        return self.get('datapoints')
 
-    def load_from_file(self, filename, delimiter=';'):
-        self.clear()
-        with open(filename, 'r', encoding='utf-8') as f:
-            reader = csv.reader(f, delimiter=delimiter)
-            for row in reader:
-                self.x.append(float(row[0].replace(',','.')))
-                self.y.append(float(row[1].replace(',','.')))
-        self._current_file = filename
-        self._data_avliable = True
+    def get_x(self):
+        return self.get('data').get('x')
 
+    def get_y(self):
+        return self.get('data').get('y')
 
-    def save_to_file(self, filename, delimiter=';'):
-        with open(filename, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f, delimiter=delimiter)
-            for x,y in zip(self.x, self.y):
-                writer.writerow(['{:.10f}'.format(x),'{:.10f}'.format(y)])
+    def get_data(self):
+        return self.get_x(), self.get_y()
 
+    def get_branches_count(self):
+        return len(self.get('branches'))
 
+    def get_branches(self):
+        return [OSGPulseData(i) for i in self.get('branches')]
+
+    def get_json(self):
+        return json.dumps(self)
+
+    @classmethod
+    def load_from_file(self, filename):
+        return OSGPulseData(json.load(open(filename)))
 
 
 
+class OSGPulseLibrary:
+    def __init__(self):
+        self._filetype = '.opl'
+        self.current_pulse_data = None
+        pass
 
+    def load_from_csv(self, filename):
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                reader = csv.reader(f, delimiter=';')
+                for row in reader:
+                    print(row)
+                return True
+        except Exception as e:
+            logger.error('Loading Pulse CSV failed: ' + str(e))
+            return False
+        pass
+
+    def save_to_csv(self, filename):
+
+        pass
+
+    def load_pulse_library(self, filename):
+        try:
+            self.current_pulse_data = OSGPulseData.load_from_file(filename)
+            return True
+        except Exception as e:
+            logger.error('Loading Pulse Library failed: ' + str(e))
+            return False
+
+    def save_pulse_library(self, dir, name):
+        pass
+
+
+
+
+if __name__ == '__main__':
+    test = OSGPulseLibrary()
+    print(1)

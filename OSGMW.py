@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt
 from ui.OSGMainWindow import Ui_OSGMainWindow
 from OSGConverter import OSGConverter
 from OSGPLC import OSGPLC
-from OSGDataContainer import OSGDataContainer
+from OSGPulse import OSGPulseLibrary
 from loguru import logger
 
 
@@ -19,20 +19,19 @@ class OSGMWPulseToolTab:
 
     def import_pulse(self):
         logger.info('Import Pulse')
+        filetypes = ["Pulse Library (*.opl)", "Pulse CSV (*.pcsv)"]
         options = QFileDialog.Options()
         fileName, fileType = QFileDialog.getOpenFileName(self.mainwindow,
                                                          self.cfgmanager.lang_get_string('filedialog_pulse_import_title'),
                                                          self.cfgmanager._config['PULSE'].get('import_file_dir'),
-                                                         f"{self.cfgmanager.lang_get_string('filedialog_pulse_import_ext_title')} ({self.cfgmanager._config['PULSE'].get('import_file_ext')})",
+                                                         ";;".join(filetypes),
                                                          options=options)
         if fileName:
             logger.info(f"Pulse selected: {fileName}")
-            if self.mainwindow.data_container.import_pulse(fileName):
-                logger.info('Pulse imported: ' + str(self.mainwindow.data_container.pulse_data))
-                self.mainwindow.set_current_pulseinfo(self.mainwindow.data_container.pulse_data.get_name(),
-                                                      self.mainwindow.data_container.pulse_data.get_max(),
-                                                      self.mainwindow.data_container.pulse_data.get_min(),
-                                                      self.mainwindow.data_container.pulse_data.get_durationms())
+            if fileType == filetypes[0] and self.mainwindow.pulse_library.load_pulse_library(fileName):
+                logger.info('Imported Pulse library')
+            elif fileType == filetypes[1] and self.mainwindow.pulse_library.load_from_csv(fileName):
+                logger.info('Imported Pulse CSV')
             else:
                 logger.error('Importing Pulse failed.')
         else:
@@ -46,7 +45,7 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
         self.setupUi(self)
         self.setupWindow()
         self.tool_tab_pulse = OSGMWPulseToolTab(self)
-        self.data_container = OSGDataContainer()
+        self.pulse_library = OSGPulseLibrary()
 
         self.plc = OSGPLC(self)
         self.setupPlcEvents()

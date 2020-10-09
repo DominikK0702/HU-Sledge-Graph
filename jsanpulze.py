@@ -36,7 +36,7 @@ class OSGPulseLibrary:
         self.json = None
 
     def load(self, filename):
-        with open('puls.json', 'r', encoding='utf-8') as f:
+        with open('puls.opl', 'r', encoding='utf-8') as f:
             self.json = OSGPulse(json.loads(f.read()))
 
     def get_branch(self, index):
@@ -49,7 +49,7 @@ class OSGPulseLibrary:
 def main():
 
     x = OSGPulseLibrary()
-    x.load('puls.json')
+    x.load('puls.opl')
     puls = x.get_branch(0)
 
 
