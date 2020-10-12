@@ -1,6 +1,8 @@
 from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QFileDialog
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt
+
+from OSGPulsePlot import OSGPulseGraph
 from ui.OSGMainWindow import Ui_OSGMainWindow
 from OSGPLC import OSGPLC
 from OSGPLCConverter import OSGSinamicsConverter
@@ -20,6 +22,8 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
         self.tool_tab_pulse = OSGMWPulseToolTab(self)
         self.pulse_library = OSGPulseLibrary()
         self.pulseTree = OSGMWPulseTree(self)
+        self.pulse_graph = OSGPulseGraph()
+        self.layoutPulseGraph.addWidget(self.pulse_graph)
 
         self.plc = OSGPLC(self)
         self.setupPlcEvents()
@@ -98,6 +102,13 @@ class OSGMWPulseTree:
         self.cfgmanager = mainwindow.application.configmanager
         self.connect_components()
 
+        self.mainwindow.treeWidget.headerItem().setText(0, "Name")
+        self.mainwindow.treeWidget.headerItem().setText(1, "Duration [ms]")
+        self.mainwindow.treeWidget.headerItem().setText(2, "Resolution [hz]")
+        self.mainwindow.treeWidget.headerItem().setText(3, "Max [G]")
+        self.mainwindow.treeWidget.headerItem().setText(4, "Min  [G]")
+        self.mainwindow.treeWidget.headerItem().setText(5, "Description")
+
     def set_tree(self, pulselibrarys, parent=None):
         if parent is not None:
             root_item = parent
@@ -131,11 +142,13 @@ class OSGMWPulseTree:
                     self.set_tree(i.get_branches(), root_item)
 
     def connect_components(self):
-        self.mainwindow.treeWidget.itemDoubleClicked.connect(self.pulse_selected)
+        self.mainwindow.treeWidget.itemClicked.connect(self.pulse_selected)
         self.mainwindow.treeWidget.hide()
-        pass
+        self.mainwindow.groupBox_2.hide()
+        self.mainwindow.pushButtonTogglePulseLibrary.setText(u"◄")
 
     def pulse_selected(self, item, column):
+        self.mainwindow.pulse_graph.plot_pulse(*item.pulse_data.get_data())
         item.setSelected(True)
 
 
@@ -152,8 +165,13 @@ class OSGMWPulseToolTab:
     def toogle_pulse_library(self):
         if self.mainwindow.treeWidget.isHidden():
             self.mainwindow.treeWidget.show()
+            self.mainwindow.groupBox_2.show()
+            self.mainwindow.pushButtonTogglePulseLibrary.setText(u"►")
         else:
             self.mainwindow.treeWidget.hide()
+            self.mainwindow.groupBox_2.hide()
+            self.mainwindow.pushButtonTogglePulseLibrary.setText(u"◄")
+
     def import_pulse(self):
         logger.info('Import Pulse')
         filetypes = ["Pulse Library (*.opl)", "Pulse CSV (*.pcsv)"]
