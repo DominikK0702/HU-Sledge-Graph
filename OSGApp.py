@@ -9,8 +9,13 @@ ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 class OSledgeGraphApplication(QApplication):
     def __init__(self, *args, **kwargs):
         super(OSledgeGraphApplication, self).__init__(*args, **kwargs)
-        self.configmanager = OSGConfigManager('new_config.ini')
+        self.configmanager = OSGConfigManager('config.ini')
         self.ui = OSGMainWindow(self)
+        self.set_stylesheet()
+
+    def set_stylesheet(self):
+        stylesheet = open(self.configmanager._config['APP'].get('stylesheet')).read()
+        self.setStyleSheet(stylesheet)
 
 
     def set_app_id(self):

@@ -2,40 +2,13 @@ from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QFileDialog
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt
 from ui.OSGMainWindow import Ui_OSGMainWindow
-from OSGConverter import OSGConverter
 from OSGPLC import OSGPLC
+from OSGPLCConverter import OSGSinamicsConverter
 from OSGPulse import OSGPulseLibrary
+import OSGDialogs
 from loguru import logger
 
-
-class OSGMWPulseToolTab:
-    def __init__(self, mainwindow):
-        self.mainwindow = mainwindow
-        self.cfgmanager = mainwindow.application.configmanager
-        self.connect_components()
-
-    def connect_components(self):
-        self.mainwindow.pushButtonImportPulse.clicked.connect(self.import_pulse)
-
-    def import_pulse(self):
-        logger.info('Import Pulse')
-        filetypes = ["Pulse Library (*.opl)", "Pulse CSV (*.pcsv)"]
-        options = QFileDialog.Options()
-        fileName, fileType = QFileDialog.getOpenFileName(self.mainwindow,
-                                                         self.cfgmanager.lang_get_string('filedialog_pulse_import_title'),
-                                                         self.cfgmanager._config['PULSE'].get('import_file_dir'),
-                                                         ";;".join(filetypes),
-                                                         options=options)
-        if fileName:
-            logger.info(f"Pulse selected: {fileName}")
-            if fileType == filetypes[0] and self.mainwindow.pulse_library.load_pulse_library(fileName):
-                logger.info('Imported Pulse library')
-            elif fileType == filetypes[1] and self.mainwindow.pulse_library.load_from_csv(fileName):
-                logger.info('Imported Pulse CSV')
-            else:
-                logger.error('Importing Pulse failed.')
-        else:
-            logger.info('Import pulse canceled by user.')
+from PyQt5.QtWidgets import QTreeWidgetItem
 
 
 class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
@@ -46,11 +19,13 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
         self.setupWindow()
         self.tool_tab_pulse = OSGMWPulseToolTab(self)
         self.pulse_library = OSGPulseLibrary()
+        self.pulseTree = OSGMWPulseTree(self)
 
         self.plc = OSGPLC(self)
         self.setupPlcEvents()
 
-        self.converter = OSGConverter(self)
+        self.converter = OSGSinamicsConverter(self)
+        self.setupConverterEvents()
         self.show()
 
     def setupWindow(self):
@@ -68,6 +43,9 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
     def setupPlcEvents(self):
         self.plc.events.language_changed.connect(self.setupStrings)
 
+    def setupConverterEvents(self):
+        pass
+
     def showMessage(self, message, duration=0):
         self.statusbar.showMessage(message, duration)
 
@@ -81,13 +59,16 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
         self.setWindowTitle(self.application.configmanager.lang_get_string('title'))
         # Main Window Menu bar
 
-    def set_current_pulseinfo(self,name, max, min,durationms):
-        self.labelCurrentPulseNameValue.setText(name)
-        self.labelCurrentPulseMaxValue.setText(str(max)+' G')
-        self.labelCurrentPulseMinValue.setText(str(min)+' G')
-        self.labelCurrentPulseDurationValue.setText(str(round(durationms,2)) + ' ms')
+    def set_current_pulseinfo(self, pulsdata):
+        self.labelCurrentPulseNameValue.setText(pulsdata.get_name())
+        self.labelCurrentPulseMaxValue.setText(str(pulsdata.get_max()) + ' G')
+        self.labelCurrentPulseMinValue.setText(str(pulsdata.get_min()) + ' G')
+        self.labelCurrentPulseDurationValue.setText(str(round(pulsdata.get_duration(), 2)) + ' ms')
+        self.labelCurrentPulseResolutionValue.setText(str(pulsdata.get_resolution()) + ' hz')
 
     def connectComponents(self):
+        self.actionAbout_Qt.triggered.connect(lambda: OSGDialogs.show_qtinfo(self))
+        self.actionAbout.triggered.connect(lambda: OSGDialogs.show_info(self))
         pass
 
     def setPlcConnectionStatus(self, state):
@@ -110,3 +91,88 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
             self.labelConverterStatusValue.setStyleSheet(
                 f"color: #{self.application.configmanager._config['CONVERTER'].get('color_disconnected')}")
 
+
+class OSGMWPulseTree:
+    def __init__(self, mainwindow: OSGMainWindow):
+        self.mainwindow = mainwindow
+        self.cfgmanager = mainwindow.application.configmanager
+        self.connect_components()
+
+    def set_tree(self, pulselibrarys, parent=None):
+        if parent is not None:
+            root_item = parent
+            for i in pulselibrarys:
+                child_item = QTreeWidgetItem(root_item)
+                child_item.setText(0, i.get_name())
+                child_item.setText(1, str(i.get_duration()))
+                child_item.setText(2, str(i.get_resolution()))
+                child_item.setText(3, str(i.get_max()))
+                child_item.setText(4, str(i.get_min()))
+                child_item.setText(5, i.get_description())
+                child_item.pulse_data = i
+                root_item.addChild(child_item)
+                if i.get_branches_count() > 0:
+                    self.set_tree(i.get_branches(), child_item)
+        else:
+            if type(pulselibrarys) != type(list()):
+                pulselibrarys = [pulselibrarys]
+            for i in pulselibrarys:
+                root_item = QTreeWidgetItem(self.mainwindow.treeWidget)
+                root_item.setText(0, i.get_name())
+                root_item.setText(1, str(i.get_duration()))
+                root_item.setText(2, str(i.get_resolution()))
+                root_item.setText(3, str(i.get_max()))
+                root_item.setText(4, str(i.get_min()))
+                root_item.setText(5, i.get_description())
+                root_item.pulse_data = i
+                self.mainwindow.treeWidget.insertTopLevelItem(0, root_item)
+
+                if i.get_branches_count() > 0:
+                    self.set_tree(i.get_branches(), root_item)
+
+    def connect_components(self):
+        self.mainwindow.treeWidget.itemDoubleClicked.connect(self.pulse_selected)
+        self.mainwindow.treeWidget.hide()
+        pass
+
+    def pulse_selected(self, item, column):
+        item.setSelected(True)
+
+
+class OSGMWPulseToolTab:
+    def __init__(self, mainwindow: OSGMainWindow):
+        self.mainwindow = mainwindow
+        self.cfgmanager = mainwindow.application.configmanager
+        self.connect_components()
+
+    def connect_components(self):
+        self.mainwindow.pushButtonImportPulse.clicked.connect(self.import_pulse)
+        self.mainwindow.pushButtonTogglePulseLibrary.clicked.connect(self.toogle_pulse_library)
+
+    def toogle_pulse_library(self):
+        if self.mainwindow.treeWidget.isHidden():
+            self.mainwindow.treeWidget.show()
+        else:
+            self.mainwindow.treeWidget.hide()
+    def import_pulse(self):
+        logger.info('Import Pulse')
+        filetypes = ["Pulse Library (*.opl)", "Pulse CSV (*.pcsv)"]
+        options = QFileDialog.Options()
+        fileName, fileType = QFileDialog.getOpenFileName(self.mainwindow,
+                                                         self.cfgmanager.lang_get_string(
+                                                             'filedialog_pulse_import_title'),
+                                                         self.cfgmanager._config['PULSE'].get('import_file_dir'),
+                                                         ";;".join(filetypes),
+                                                         options=options)
+        if fileName:
+            logger.info(f"Pulse selected: {fileName}")
+            if fileType == filetypes[0] and self.mainwindow.pulse_library.load_pulse_library(fileName):
+                self.mainwindow.set_current_pulseinfo(self.mainwindow.pulse_library.current_pulse_data)
+                logger.info('Imported Pulse library')
+                self.mainwindow.pulseTree.set_tree(self.mainwindow.pulse_library.current_pulse_data)
+            elif fileType == filetypes[1] and self.mainwindow.pulse_library.load_from_csv(fileName):
+                logger.info('Imported Pulse CSV')
+            else:
+                logger.error('Importing Pulse failed.')
+        else:
+            logger.info('Import pulse canceled by user.')

@@ -12,6 +12,9 @@ class OSGPulseData(dict):
     def get_name(self):
         return self.get('name')
 
+    def get_duration(self):
+        return self.get_x()[-1]
+
     def get_description(self):
         return self.get('description')
 
@@ -26,6 +29,12 @@ class OSGPulseData(dict):
 
     def get_y(self):
         return self.get('data').get('y')
+
+    def get_max(self):
+        return max(self.get('data').get('y'))
+
+    def get_min(self):
+        return min(self.get('data').get('y'))
 
     def get_data(self):
         return self.get_x(), self.get_y()

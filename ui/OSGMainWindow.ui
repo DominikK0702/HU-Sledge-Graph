@@ -127,7 +127,7 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>pulse1337G.pcsv</string>
+                      <string/>
                      </property>
                     </widget>
                    </item>
@@ -139,7 +139,7 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>1336.67 G</string>
+                      <string/>
                      </property>
                     </widget>
                    </item>
@@ -151,7 +151,7 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>-140 G</string>
+                      <string/>
                      </property>
                     </widget>
                    </item>
@@ -175,7 +175,31 @@
                       </font>
                      </property>
                      <property name="text">
-                      <string>100 ms</string>
+                      <string/>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QLabel" name="labelCurrentPulseResolution">
+                     <property name="font">
+                      <font>
+                       <pointsize>10</pointsize>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string>Resolution:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="4" column="1">
+                    <widget class="QLabel" name="labelCurrentPulseResolutionValue">
+                     <property name="font">
+                      <font>
+                       <pointsize>10</pointsize>
+                      </font>
+                     </property>
+                     <property name="text">
+                      <string/>
                      </property>
                     </widget>
                    </item>
@@ -203,6 +227,19 @@
               <property name="title">
                <string>View</string>
               </property>
+              <layout class="QGridLayout" name="gridLayout_4">
+               <item row="0" column="0">
+                <layout class="QGridLayout" name="gridLayout">
+                 <item row="0" column="0">
+                  <widget class="QPushButton" name="pushButtonTogglePulseLibrary">
+                   <property name="text">
+                    <string>Pulse Library</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
              </widget>
             </item>
             <item row="0" column="5">
@@ -308,6 +345,59 @@
          <attribute name="title">
           <string>Pulse</string>
          </attribute>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,1">
+            <item>
+             <widget class="QGroupBox" name="groupBox">
+              <property name="title">
+               <string>Plot</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTreeWidget" name="treeWidget">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="expandsOnDoubleClick">
+               <bool>false</bool>
+              </property>
+              <column>
+               <property name="text">
+                <string>Name</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Duration</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Resolution</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Max</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Min</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Description</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
         </widget>
         <widget class="QWidget" name="tabCentralTrace">
          <attribute name="title">
@@ -400,7 +490,7 @@
            <string/>
           </property>
           <property name="pixmap">
-           <pixmap>../assets/odlogo.png</pixmap>
+           <pixmap>../../../.designer/assets/odlogo.png</pixmap>
           </property>
           <property name="alignment">
            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
