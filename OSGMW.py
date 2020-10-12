@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QFileDialog
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt
-
+from PyQt5.QtWidgets import QTreeWidgetItem
 from OSGPulsePlot import OSGPulseGraph
 from ui.OSGMainWindow import Ui_OSGMainWindow
 from OSGPLC import OSGPLC
@@ -10,7 +10,7 @@ from OSGPulse import OSGPulseLibrary
 import OSGDialogs
 from loguru import logger
 
-from PyQt5.QtWidgets import QTreeWidgetItem
+
 
 
 class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
@@ -22,7 +22,7 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
         self.tool_tab_pulse = OSGMWPulseToolTab(self)
         self.pulse_library = OSGPulseLibrary()
         self.pulseTree = OSGMWPulseTree(self)
-        self.pulse_graph = OSGPulseGraph()
+        self.pulse_graph = OSGPulseGraph(self)
         self.layoutPulseGraph.addWidget(self.pulse_graph)
 
         self.plc = OSGPLC(self)
@@ -143,13 +143,12 @@ class OSGMWPulseTree:
 
     def connect_components(self):
         self.mainwindow.treeWidget.itemClicked.connect(self.pulse_selected)
-        self.mainwindow.treeWidget.hide()
-        self.mainwindow.groupBox_2.hide()
-        self.mainwindow.pushButtonTogglePulseLibrary.setText(u"◄")
+        self.mainwindow.treeWidget.show()
+        self.mainwindow.groupBox_2.show()
+        self.mainwindow.pushButtonTogglePulseLibrary.setText(u"►")
 
     def pulse_selected(self, item, column):
         self.mainwindow.pulse_graph.plot_pulse(*item.pulse_data.get_data())
-        item.setSelected(True)
 
 
 class OSGMWPulseToolTab:
