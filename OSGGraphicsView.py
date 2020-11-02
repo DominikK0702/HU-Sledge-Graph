@@ -1,23 +1,23 @@
 import pyqtgraph as pg
-import math
+import numpy as np
 
-class OSGPulseGraphicsView():
+class OSGPulsePlotItem(pg.PlotItem):
+    def __init__(self):
+        super(OSGPulsePlotItem, self).__init__()
+
+    def _plot_example(self):
+        self.plot(np.arange(0,1000,1), np.sin(np.arange(0,10,0.01)))
+
+class OSGPulseGraphicsView:
     def __init__(self, graphicsview: pg.GraphicsLayoutWidget):
         self.gv = graphicsview
-        pg.setConfigOptions(antialias=True)
-        self.plot_item = None
-        self.resetPlot()
-        self.setPlot(pg.PlotItem(y=[math.sin(i/200) for i in range(1000)]))
+        self.plot_item = OSGPulsePlotItem()
         self.setup()
-
+        self.plot_item._plot_example()
 
     def setup(self):
+        # Global Config
+        pg.setConfigOptions(antialias=True)
         self.gv.setBackground('#333333')
-
-    def resetPlot(self):
-        if self.plot_item is not None: self.gv.removeItem(self.plot_item)
-
-        
-    def setPlot(self, plotitem):
-        self.resetPlot()
-        self.plot_item = self.gv.addItem(plotitem)
+        # Init PlotItem
+        self.gv.setCentralWidget(self.plot_item)

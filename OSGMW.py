@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTreeWidgetItem
 from OSGGraphicsView import OSGPulseGraphicsView
 from ui.OSGMainWindow import Ui_OSGMainWindow
+from ui.OSGCreatePulseDialog import Ui_OSGCreatePulseDialog
 from OSGPLC import OSGPLC
 from OSGPLCConverter import OSGSinamicsConverter
 from OSGPulse import OSGPulseLibrary
@@ -20,13 +21,13 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
         self.tool_tab_pulse = OSGMWPulseToolTab(self)
         self.pulse_library = OSGPulseLibrary()
         self.pulseTree = OSGMWPulseTree(self)
-        self.pulseGrahicsView = OSGPulseGraphicsView(self.graphicsView)
+        self.pulseGraphicsView = OSGPulseGraphicsView(self.graphicsView)
         self.plc = OSGPLC(self)
         self.setupPlcEvents()
-
         self.converter = OSGSinamicsConverter(self)
         self.setupConverterEvents()
         self.show()
+
 
     def setupWindow(self):
         self.setWindowMonitor()
@@ -151,11 +152,14 @@ class OSGMWPulseToolTab:
     def __init__(self, mainwindow: OSGMainWindow):
         self.mainwindow = mainwindow
         self.cfgmanager = mainwindow.application.configmanager
+        self.create_pulse_ui = None
+        self.create_pulse_mw = None
         self.connect_components()
 
     def connect_components(self):
         self.mainwindow.pushButtonImportPulse.clicked.connect(self.import_pulse)
         self.mainwindow.pushButtonTogglePulseLibrary.clicked.connect(self.toogle_pulse_library)
+        self.mainwindow.pushButtonCreatePulse.clicked.connect(self.handle_create_pulse)
 
     def toogle_pulse_library(self):
         if self.mainwindow.treeWidget.isHidden():
@@ -166,6 +170,13 @@ class OSGMWPulseToolTab:
             self.mainwindow.treeWidget.hide()
             self.mainwindow.groupBox_2.hide()
             self.mainwindow.pushButtonTogglePulseLibrary.setText(u"◄")
+
+    def handle_create_pulse(self):
+        self.create_pulse_mw = QMainWindow()
+        self.create_pulse_ui = Ui_OSGCreatePulseDialog()
+        self.create_pulse_ui.setupUi(self.create_pulse_mw)
+        self.create_pulse_mw.setWindowIcon(QIcon("./assets/Slice1.png"))
+        self.create_pulse_mw.show()
 
     def import_pulse(self):
         logger.info('Import Pulse')
