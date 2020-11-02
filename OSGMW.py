@@ -70,7 +70,6 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
     def connectComponents(self):
         self.actionAbout_Qt.triggered.connect(lambda: OSGDialogs.show_qtinfo(self))
         self.actionAbout.triggered.connect(lambda: OSGDialogs.show_info(self))
-        pass
 
     def setPlcConnectionStatus(self, state):
         if state:
@@ -172,10 +171,26 @@ class OSGMWPulseToolTab:
             self.mainwindow.pushButtonTogglePulseLibrary.setText(u"◄")
 
     def handle_create_pulse(self):
+        units = [
+            ["[G]", "[m/s²]"],
+            ["[m/s]", "km/h"],
+            ["[mm]", "cm"]
+        ]
+
+        def type_changed(index):
+            self.create_pulse_ui.comboBoxUnit.clear()
+            self.create_pulse_ui.comboBoxUnit.addItems(units[index])
+
+        def resolution_changed(index):
+            print(index)
+
         self.create_pulse_mw = QMainWindow()
         self.create_pulse_ui = Ui_OSGCreatePulseDialog()
         self.create_pulse_ui.setupUi(self.create_pulse_mw)
         self.create_pulse_mw.setWindowIcon(QIcon("./assets/Slice1.png"))
+        self.create_pulse_ui.comboBoxUnit.addItems(units[0])
+        self.create_pulse_ui.comboBoxType.currentIndexChanged.connect(type_changed)
+        self.create_pulse_ui.comboBoxResolution.currentIndexChanged.connect(resolution_changed)
         self.create_pulse_mw.show()
 
     def import_pulse(self):
