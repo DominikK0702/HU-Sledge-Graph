@@ -2,15 +2,13 @@ from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QFileDialog
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTreeWidgetItem
-from OSGPulsePlot import OSGPulseGraph
+from OSGGraphicsView import OSGPulseGraphicsView
 from ui.OSGMainWindow import Ui_OSGMainWindow
 from OSGPLC import OSGPLC
 from OSGPLCConverter import OSGSinamicsConverter
 from OSGPulse import OSGPulseLibrary
 import OSGDialogs
 from loguru import logger
-
-
 
 
 class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
@@ -22,9 +20,7 @@ class OSGMainWindow(QMainWindow, Ui_OSGMainWindow):
         self.tool_tab_pulse = OSGMWPulseToolTab(self)
         self.pulse_library = OSGPulseLibrary()
         self.pulseTree = OSGMWPulseTree(self)
-        self.pulse_graph = OSGPulseGraph(self)
-        self.layoutPulseGraph.addWidget(self.pulse_graph)
-
+        self.pulseGrahicsView = OSGPulseGraphicsView(self.graphicsView)
         self.plc = OSGPLC(self)
         self.setupPlcEvents()
 

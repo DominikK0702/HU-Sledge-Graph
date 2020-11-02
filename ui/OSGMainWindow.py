@@ -212,6 +212,9 @@ class Ui_OSGMainWindow(object):
         self.gridLayout_10.addWidget(self.groupBox_2, 1, 1, 1, 1)
         self.layoutPulseGraph = QtWidgets.QVBoxLayout()
         self.layoutPulseGraph.setObjectName("layoutPulseGraph")
+        self.graphicsView = GraphicsLayoutWidget(self.tabCentralPulse)
+        self.graphicsView.setObjectName("graphicsView")
+        self.layoutPulseGraph.addWidget(self.graphicsView)
         self.gridLayout_10.addLayout(self.layoutPulseGraph, 0, 0, 2, 1)
         self.gridLayout_10.setColumnStretch(0, 3)
         self.gridLayout_10.setColumnStretch(1, 2)
@@ -280,7 +283,7 @@ class Ui_OSGMainWindow(object):
         self.gridLayout_2.addLayout(self.centralGridLayout, 1, 0, 1, 1)
         OSGMainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(OSGMainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1920, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1920, 18))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -357,3 +360,4 @@ class Ui_OSGMainWindow(object):
         self.actionAbout.setText(_translate("OSGMainWindow", "About"))
         self.actionAbout_Qt.setText(_translate("OSGMainWindow", "About Qt"))
         self.actionExit.setText(_translate("OSGMainWindow", "Exit"))
+from pyqtgraph import GraphicsLayoutWidget

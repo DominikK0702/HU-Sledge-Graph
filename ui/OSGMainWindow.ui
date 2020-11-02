@@ -407,7 +407,11 @@
              </widget>
             </item>
             <item row="0" column="0" rowspan="2">
-             <layout class="QVBoxLayout" name="layoutPulseGraph"/>
+             <layout class="QVBoxLayout" name="layoutPulseGraph">
+              <item>
+               <widget class="GraphicsLayoutWidget" name="graphicsView"/>
+              </item>
+             </layout>
             </item>
            </layout>
           </item>
@@ -523,7 +527,7 @@
      <x>0</x>
      <y>0</y>
      <width>1920</width>
-     <height>21</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -566,6 +570,13 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>GraphicsLayoutWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>
