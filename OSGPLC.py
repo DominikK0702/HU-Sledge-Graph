@@ -77,6 +77,7 @@ class GDB_Graph_Out:
         self.file_plot_empty = Smarttags.String(self._plc, self._db, 268, 64)
         self.path_export_csv = Smarttags.String(self._plc, self._db, 334)
         self.language_german = Smarttags.Bool(self._plc, self._db, 590, 0)
+        self.versuchstyp = Smarttags.Int(self._plc, self._db, 592)
 
 
 class GDB_Daten_soll:
