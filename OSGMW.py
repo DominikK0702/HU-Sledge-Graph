@@ -4,6 +4,9 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTreeWidgetItem
 from OSGGraphicsView import OSGPulseGraphicsView
 from ui.OSGMainWindow import Ui_OSGMainWindow
+
+
+from OSGDialogs import show_create_pulse
 from ui.OSGCreatePulseDialog import Ui_OSGCreatePulseDialog
 from OSGPLC import OSGPLC
 from OSGPLCConverter import OSGSinamicsConverter
@@ -170,58 +173,15 @@ class OSGMWPulseToolTab:
             self.mainwindow.pushButtonTogglePulseLibrary.setText(u"◄")
 
     def handle_create_pulse(self):
-        resolutions = ["16kHz", "12kHz", "8kHz", "4kHz"]
-        max_datapoints = 3000
-        max_duration = max_datapoints / int(resolutions[0].split('kHz')[0])
+        show_create_pulse(self.mainwindow, self.handle_create_pulse_finished)
 
-        units = [
-            ["[G]", "[m/s²]"],
-            ["[m/s]", "[km/h]"],
-            ["[mm]", "[cm]", "[m]"]
-        ]
 
-        def type_changed(index):
-            self.create_pulse_ui.comboBoxUnit.clear()
-            self.create_pulse_ui.comboBoxUnit.addItems(units[index])
-
-        def resolution_changed(index):
-            max_duration = max_datapoints / int(resolutions[index].split('kHz')[0])
-            self.create_pulse_ui.labelDuration.setText(f"Duration (max: {max_duration}ms):")
-            self.create_pulse_ui.doubleSpinBoxDuration.setMaximum(max_duration)
-            self.create_pulse_ui.doubleSpinBoxDuration.setValue(max_duration)
-
-        self.create_pulse_mw = QMainWindow()
-        self.create_pulse_ui = Ui_OSGCreatePulseDialog()
-        self.create_pulse_ui.setupUi(self.create_pulse_mw)
-        self.create_pulse_mw.setWindowIcon(QIcon("./assets/Slice1.png"))
-
-        self.create_pulse_ui.comboBoxResolution.clear()
-        self.create_pulse_ui.comboBoxResolution.addItems(resolutions)
-
-        self.create_pulse_ui.labelDuration.setText(f"Duration (max: {max_duration}ms):")
-        self.create_pulse_ui.doubleSpinBoxDuration.setMaximum(max_duration)
-        self.create_pulse_ui.doubleSpinBoxDuration.setValue(max_duration)
-
-        self.create_pulse_ui.comboBoxUnit.addItems(units[0])
-        self.create_pulse_ui.comboBoxType.currentIndexChanged.connect(type_changed)
-        self.create_pulse_ui.comboBoxResolution.currentIndexChanged.connect(resolution_changed)
-
-        self.create_pulse_ui.buttonBox.accepted.connect(lambda: self.handle_create_pulse_finished(
-            resolutions[self.create_pulse_ui.comboBoxResolution.currentIndex()],
-            self.create_pulse_ui.doubleSpinBoxDuration.value(),
-            self.create_pulse_ui.comboBoxType.currentText(),
-            units[self.create_pulse_ui.comboBoxType.currentIndex()][self.create_pulse_ui.comboBoxUnit.currentIndex()],
-            max_datapoints
-        ))
-
-        self.create_pulse_mw.show()
-
-    def handle_create_pulse_finished(self, resolution, duration, type, unit, maxpoints):
-        self.create_pulse_mw.close()
+    def handle_create_pulse_finished(self, resolution, duration, type, unit, maxpoints, cb):
+        cb()
         res = int(resolution.split('kHz')[0]) * 1e3
         x = [(i / res) for i in range(0, maxpoints)]
         y = [0.0 for i in range(len(x))]
-        print(1)
+        self.mainwindow.pulseGraphicsView.plot_item.plotPulse(x,y)
 
     def import_pulse(self):
         logger.info('Import Pulse')

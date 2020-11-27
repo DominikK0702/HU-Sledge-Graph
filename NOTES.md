@@ -7,6 +7,8 @@
     * G
 * **Way**
     * mm
+    * cm
+    * m
 * **Velocity**
     * m/s
-    * kmh
+    * km/h
