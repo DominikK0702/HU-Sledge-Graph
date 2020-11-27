@@ -2,6 +2,7 @@ import json
 import csv
 from loguru import logger
 
+
 class OSGPulseData(dict):
     def __int__(self, data):
         super(OSGPulseData, self).__int__(data)
@@ -53,7 +54,6 @@ class OSGPulseData(dict):
         return OSGPulseData(json.load(open(filename)))
 
 
-
 class OSGPulseLibrary:
     def __init__(self):
         self._filetype = '.opl'
@@ -86,8 +86,6 @@ class OSGPulseLibrary:
 
     def save_pulse_library(self, dir, name):
         pass
-
-
 
 
 if __name__ == '__main__':
